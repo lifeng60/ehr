@@ -170,7 +170,7 @@ public class SysMenuManager extends BeanBase {
     	
     	if (dbUtility.exists("select menuid from roleitemdefine " +
     			"where roleid in (select id from roledefine where enabled = 1 and " +
-    			"(allhave = 1 or id in (select roleid from euserrole where enabled = 1 and userid = :userId))) " +
+    			"(allhave = 1 or id in (select roleid from euserrole where enabled = 1 and readonly = 0 and userid = :userId))) " +
     			"and visiabled = 1 and menuid = :menuId group by menuid having sum(enabled) > 0", 
     			new ArgMap().add("userId", this.getUser().getUserId()).add("menuId", menu.getId()))) {
     		readOnly = false;
@@ -224,7 +224,7 @@ public class SysMenuManager extends BeanBase {
     			this.getUser().setName(user.getName());
     			this.getUser().setHasLogin(true);
     			this.getUser().setLoginTime(new Date());
-    			this.getUser().setOperOrgId1(1082);
+    			this.getUser().setOperOrgId1(user.getU1());
     			
     			this.initModuleList(1);
     			return "/main.jsf?faces-redirect=true";

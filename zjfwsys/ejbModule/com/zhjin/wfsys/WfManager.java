@@ -41,6 +41,7 @@ import com.zhjin.sys.window.WindowData;
 import com.zhjin.util.ArgMap;
 import com.zhjin.util.Audit;
 import com.zhjin.util.BeanBase;
+import com.zhjin.util.FileUploadData;
 import com.zhjin.util.SysUtil;
 import com.zhjin.util.Utility;
 
@@ -78,13 +79,68 @@ public class WfManager extends BeanBase {
     	return null;
     }
 
-    public void deployWorkflow(UploadedFile wffile, Object obj) throws Exception {
+    public void openMyRequestWindow() throws Exception {
+    	List<WorkflowDefine> wfList = dbUtility.getDataList("select * "
+    	  + "from workflowdefine a, (select rownum rn, strId from workflowtypecode order by indexno, label) b "
+    	  + "where a.enabled = 1 and a.visiabled = 1 "
+    	  + "      and a.alwayshave = 1 and a.wfType = b.strid and a.wfType != 'SYSTEM'"
+    	  + "order by b.rn, a.indexno, a.wfnamecn ", WorkflowDefine.class, null);
+
+    	List<WorkflowDefine> actList = new ArrayList<WorkflowDefine>();
+    	for (WorkflowDefine wf : wfList) {
+    		try {
+    			if (Utility.notEmptyString(wf.getVisiableEL())) {
+    				if (!(Boolean)Utility.getELValue(wf.getVisiableEL())) {
+    					continue;
+    				}
+    			}
+    			if (Utility.notEmptyString(wf.getAlwaysHaveEL())) {
+    				if (!(Boolean)Utility.getELValue(wf.getAlwaysHaveEL())) {
+    					continue;
+    				}
+    			}
+    			if (Utility.notEmptyString(wf.getEmpQueryString())) {
+    				if (!dbUtility.exists("select * from euser where id = :empId and :empId in (" 
+    						+ (String)Utility.getELValue(wf.getEmpQueryString() + ")"), new ArgMap().add("empId", this.getUser().getUserId()))) {
+    					continue;
+    				}
+    			}
+    		} catch (Exception ex) {
+    			ex.printStackTrace();
+    			continue;
+    		}
+    		actList.add(wf);
+    	}
+    	
+		List<SelectItem> aList = new ArrayList<SelectItem>();
+		String _wfType = null;
+		List<WorkflowDefine> _wl = null;
+		for (WorkflowDefine act : actList) {
+			if (act.getWfType().equals(_wfType)) {
+				_wl.add(act);
+			} else {
+				WorkflowTypeCode _wtc = dbUtility.getEntity("select * from workflowtypecode where strid = :strId", 
+						WorkflowTypeCode.class, new ArgMap().add("strId", act.getWfType()));
+				SelectItem _item = new SelectItem();
+				_item.setLabel(_wtc.getLabel());
+				_item.setValue(new ArrayList<WorkflowDefine>());
+				_wl = (ArrayList<WorkflowDefine>)_item.getValue();
+				_wl.add(act);
+				_wfType = act.getWfType();
+				aList.add(_item);
+			}
+		}
+		
+		this.getWindowData().getObjMap().put("wfList", aList);
+    }
+    
+    public void deployWorkflow(FileUploadData fData, UploadedFile uFile) throws Exception {
 
     	RepositoryService rs = WFUtil.processEngine.getRepositoryService();
 
-    	Deployment deploy = rs.createDeployment().addZipInputStream(new ZipInputStream(wffile.getInputstream())).deploy();
+    	Deployment deploy = rs.createDeployment().addZipInputStream(new ZipInputStream(uFile.getInputstream())).deploy();
 
-    	WorkflowDefine wfd = (WorkflowDefine)obj;
+    	WorkflowDefine wfd = (WorkflowDefine)fData.getParentData();
 
     	ProcessDefinition pdf = rs.createProcessDefinitionQuery().deploymentId(deploy.getId()).singleResult();
 
@@ -147,8 +203,8 @@ public class WfManager extends BeanBase {
 		} catch (Exception ex) {
 			throw ex;
 		} finally {
-	    	if (wffile.getInputstream() != null) {
-	    		wffile.getInputstream().close();
+	    	if (uFile.getInputstream() != null) {
+	    		uFile.getInputstream().close();
 	    	}
 	    }
 
@@ -515,6 +571,17 @@ public class WfManager extends BeanBase {
     		dbUtility.update(wfd);
     	}
     	this.getWindowData().closeWindow();
+    }
+    
+    @Audit
+    public void wfRequest(ActionEvent event) throws Exception {
+    	long wfId = (Long)event.getComponent().getAttributes().get("wfId");
+    	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, wfId);
+    	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
+    	dBase.loadData(0);
+    	dBase.initData(null);
+    	dBase.initWFDataComponent();
+    	Utility.executeJavaScript("wfSelectPanel.hide();");
     }
 
 }

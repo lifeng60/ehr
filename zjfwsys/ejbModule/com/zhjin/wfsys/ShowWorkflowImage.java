@@ -7,9 +7,6 @@ package com.zhjin.wfsys;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.ejb.EJB;
-import javax.faces.context.FacesContext;
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
@@ -18,10 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.activiti.engine.repository.ProcessDefinition;
-
-import com.zhjin.context.ConvManager;
-import com.zhjin.sys.window.WindowData;
-import com.zhjin.util.DBUtility;
 
 @WebServlet(urlPatterns="/workflow/showworkflowimage")
 public class ShowWorkflowImage extends HttpServlet {

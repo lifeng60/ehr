@@ -11,6 +11,9 @@ import com.zhjin.base.EntityHasIdBase;
 
 @Entity
 public class WorkflowDefine extends EntityHasIdBase {
+	
+	@Column
+	private long depId;
 
 	@Column(length=40)
 	private String deployId;
@@ -341,4 +344,13 @@ public class WorkflowDefine extends EntityHasIdBase {
 	public void setDataShow(long dataShow) {
 		this.dataShow = dataShow;
 	}
+
+	public long getDepId() {
+		return depId;
+	}
+
+	public void setDepId(long depId) {
+		this.depId = depId;
+	}
+	
 }
