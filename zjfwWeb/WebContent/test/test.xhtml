@@ -1,21 +1,17 @@
-<!DOCTYPE html> 
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui"
-      xmlns:zhjin="http://java.sun.com/jsf/composite/component"
-      xmlns:zh="http://www.zhjin.com/custom"
-      > 
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:zhjin="http://java.sun.com/jsf/composite/component"
+	xmlns:zh="http://www.zhjin.com/custom"
+	template="../template/base.xhtml">
 
-<h:body> 
-	<ui:composition template="../template/base.xhtml">
-		<ui:define name="pagecontent">
-			<h:form>
-				<p:commandButton value="test" actionListener="#{ehrTestBean.ehrTestClick}">
-				</p:commandButton>
-			</h:form>
-       </ui:define>
-	</ui:composition>
-</h:body> 
-</html>
+	<ui:define name="pagecontent">
+		<h:form>
+			<p:commandButton value="test" actionListener="#{ehrTestBean.ehrTestClick}">
+			</p:commandButton>
+			<p:commandButton value="dialogTest" action="dialog:test1?modal=true"/>
+		</h:form>
+      </ui:define>
+</ui:composition>

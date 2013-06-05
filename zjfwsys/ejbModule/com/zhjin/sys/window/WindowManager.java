@@ -111,15 +111,15 @@ public class WindowManager extends BeanBase {
 	    		_data.setWindowURL(wd.getWindowURL());
 	    	}
 	
-	    	if ("WINDOW_ONE_TABLE".equals(wd.getWindowType())) {
+	    	if (WindowData.WINDOW_ONE_TABLE.equals(wd.getWindowType())) {
 	
 	    		// 表格窗口
 	    		_data.setDefaultTableData(tableManager.initDataTable(inData, WindowData.TABLENAME, wd.getTable1()));
 	    		_data.setWindowURL("/sys/windowonetable.jsf");
 	
-	    	} else if ("WINDOW_MASTER_DETAIL_TABLE".equals(wd.getWindowType())) {
+	    	} else if (WindowData.WINDOW_MASTER_DETAIL_TABLE.equals(wd.getWindowType())) {
 	
-	    	} else if ("WINDOW_ONE_OPERATEOBJECT".equals(wd.getWindowType())) {
+	    	} else if (WindowData.WINDOW_ONE_OPERATEOBJECT.equals(wd.getWindowType())) {
 	
 	    		ObjectEditDefine _oed = dbUtility.getEntity(ObjectEditDefine.class, wd.getDialog1());
 	
@@ -148,7 +148,7 @@ public class WindowManager extends BeanBase {
 	        		_data.setWindowURL("/sys/windowoneobject.jsf");
 	        	}
 	
-	    	} else if ("WINDOW_TREE_TABLE".equals(wd.getWindowType())) {
+	    	} else if (WindowData.WINDOW_TREE_TABLE.equals(wd.getWindowType())) {
 	
 	    		// 树，表格窗口
 	    		TreeDefine _tree = dbUtility.getEntity(TreeDefine.class, wd.getTree1());
@@ -173,10 +173,10 @@ public class WindowManager extends BeanBase {
 	    		
 	        	_data.setWindowURL("/sys/windowtreetable.jsf");
 	        	
-	    	} else if ("WINDOW_OBJECT_TABLE".equals(wd.getWindowType())) {
+	    	} else if (WindowData.WINDOW_OBJECT_TABLE.equals(wd.getWindowType())) {
 	
 	    		// 对象，表格窗口
-	    	} else if ("CUSTOM_WINDOW".equals(wd.getWindowType())) {
+	    	} else if (WindowData.CUSTOM_WINDOW.equals(wd.getWindowType())) {
 	
 	    		if (!Utility.notEmptyString(_data.getWindowURL()) && wd.getCustomId() > 0) {
 	    			SysLargeText _lt = dbUtility.getEntity(SysLargeText.class, wd.getCustomId());

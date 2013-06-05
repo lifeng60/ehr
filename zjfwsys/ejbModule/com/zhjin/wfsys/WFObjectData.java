@@ -44,6 +44,9 @@ public class WFObjectData extends WFDataBase {
 
 	@Override
 	public void loadData(long dataId) throws Exception {
+		if (dataId == 0) {
+			return;
+		}
 		ViewObjectProperty vop = Utility.getDBUtility().getEntity(ViewObjectProperty.class, this.getObjectName());
 		this.getObjectData().setEditData(Utility.getDBUtility().getEntity("select * from " + this.getObjectName() + " where id = :id",
 				Class.forName(vop.getObjectClassName()), new ArgMap().add("id", dataId)));
@@ -55,14 +58,47 @@ public class WFObjectData extends WFDataBase {
 	}
 
 	@Override
-	public void initWFDataComponent() throws Exception {
+	public void initWFDataComponent(long wfId) throws Exception {
 
        	WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
        			WFNodeProperty.class,
-       			new ArgMap().add("wfId", Utility.getDBUtility().getEntity(WFInstance.class, this.getWfInstanceId()).getWfId())
+       			new ArgMap().add("wfId", wfId)
        			.add("nodeId", this.getNodeId()));
+
        	Utility.getObjectEditManager().initObjectEditData(this.getObjectData(), this.getObjectData().getEditData(), "", "", "Title",
        			nodeProperty.getReadOnlyColumns(), nodeProperty.getHideColumns());
+       	
+       	if (nodeProperty.getDialogHeight() > 0) {
+       		this.setWindowHeight(nodeProperty.getDialogHeight());
+       	}
+       	if (nodeProperty.getDialogWidth() > 0) {
+       		this.setWindowWidth(nodeProperty.getDialogWidth());
+       	}
+       	if (Utility.notEmptyString(nodeProperty.getApplyURL()) && !Utility.notEmptyString(this.getUrl())) {
+       		this.setUrl(nodeProperty.getApplyURL());
+       	}
+       	if (this.getWindowWidth() == 0 || this.getWindowHeight() == 0) {
+       		WorkflowDefine wfd = Utility.getDBUtility().getEntity(WorkflowDefine.class, wfId);
+       		if (wfd.getWidth() > 0) {
+       			this.setWindowHeight(wfd.getWidth());
+       		}
+       		if (wfd.getHeight() > 0) {
+       			this.setWindowHeight(wfd.getHeight());
+       		}
+           	if (Utility.notEmptyString(wfd.getUrl()) && !Utility.notEmptyString(this.getUrl())) {
+           		this.setUrl(wfd.getUrl());
+           	}
+       	}
+       	if (this.getWindowWidth() == 0 || this.getWindowHeight() == 0) {
+       		ViewObjectProperty _vop = Utility.getDBUtility().getEntity(ViewObjectProperty.class, this.getObjectName());
+       		if (_vop.getEditWidth() > 0) {
+       			this.setWindowWidth(_vop.getEditWidth());
+       		}
+       		if (_vop.getEditHeight() > 0) {
+       			this.setWindowHeight(_vop.getEditHeight());
+       		}
+       	}
+       	
 	}
 
 	@Override

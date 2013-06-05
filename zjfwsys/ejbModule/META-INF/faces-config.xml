@@ -6,6 +6,8 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_2_0.xsd"
     version="2.0">
 	<application>
+	    <action-listener>org.primefaces.application.DialogActionListener</action-listener>
+	    <navigation-handler>org.primefaces.application.DialogNavigationHandler</navigation-handler>
 		<view-handler>com.zhjin.sys.ZhjinViewHandler</view-handler>
 	</application>
 	<lifecycle>

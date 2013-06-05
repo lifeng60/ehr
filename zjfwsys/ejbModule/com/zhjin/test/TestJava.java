@@ -20,16 +20,13 @@ public class TestJava {
 	 */
 	public static void main(String[] args) {
 
-		System.out.println(Utility.encoderPassword("a2", "a2"));
+		String s = "wid=menuconv?dcid=729e4958-2691-469f-9ef9-57e167f8ea1d";
+		String s1 = s.replace('?', '&');
+		System.out.println(s1);
 	}
 	
 	private static void a(String s, String argname, TreeMap<Integer, String> sear) {
-		int length = argname.length();
-		int position = 0;
-		while ((position = s.indexOf(":" + argname, position)) != -1 ) {
-			sear.put(position, argname);
-			position = position + length;
-		}
+		
 	}
 
 }

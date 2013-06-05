@@ -3,8 +3,22 @@
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:p="http://primefaces.org/ui"
+	xmlns:zhjin="http://java.sun.com/jsf/composite/component"
 	xmlns:composite="http://java.sun.com/jsf/composite"
-	xmlns:zh="http://www.zhjin.com/custom">
-	
+	xmlns:zh="http://www.zhjin.com/custom"
+	template="../template/dialogtemplate.xhtml">
 
+	<ui:define name="title">
+		
+	</ui:define>
+	<ui:define name="dialogcontent">
+		<p:layout id="layout" style="height:100%;">
+		    <p:layoutUnit position="east" resizable="false" size="200">
+		    </p:layoutUnit>		
+		    <p:layoutUnit position="center">
+		        <zhjin:objectEdit value="#{windowData.inData.objectData}">
+				</zhjin:objectEdit>
+		    </p:layoutUnit>
+		</p:layout>
+	</ui:define>
 </ui:composition>

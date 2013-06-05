@@ -27,6 +27,12 @@ public class WindowData implements Serializable {
 	public static String TABLENAME = "table";
 	public static String MASTERTABLENAME = "mastertable";
 	public static String DETAILTABLENAME = "detailtable";
+	public static String CUSTOM_WINDOW = "CUSTOM_WINDOW";
+	public static String WINDOW_ONE_TABLE = "WINDOW_ONE_TABLE";
+	public static String WINDOW_MASTER_DETAIL_TABLE = "WINDOW_MASTER_DETAIL_TABLE";
+	public static String WINDOW_ONE_OPERATEOBJECT = "WINDOW_ONE_OPERATEOBJECT";
+	public static String WINDOW_TREE_TABLE = "WINDOW_TREE_TABLE";
+	public static String WINDOW_OBJECT_TABLE = "WINDOW_OBJECT_TABLE";
 
 	private WindowData parentWindowData;
 

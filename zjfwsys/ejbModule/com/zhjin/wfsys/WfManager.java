@@ -35,9 +35,11 @@ import org.primefaces.model.UploadedFile;
 
 import com.zhjin.base.entity.SysLargeText;
 import com.zhjin.context.ConvManager;
+import com.zhjin.sys.entity.WindowDefine;
 import com.zhjin.sys.manager.ObjectEditManager;
 import com.zhjin.sys.manager.TableManager;
 import com.zhjin.sys.window.WindowData;
+import com.zhjin.sys.window.WindowManager;
 import com.zhjin.util.ArgMap;
 import com.zhjin.util.Audit;
 import com.zhjin.util.BeanBase;
@@ -61,6 +63,9 @@ public class WfManager extends BeanBase {
 
 	@EJB
 	private ObjectEditManager objectEditManager;
+	
+	@EJB
+	private WindowManager windowManager;
 
 	@EJB
 	private SysUtil sysUtil;
@@ -576,12 +581,25 @@ public class WfManager extends BeanBase {
     @Audit
     public void wfRequest(ActionEvent event) throws Exception {
     	long wfId = (Long)event.getComponent().getAttributes().get("wfId");
+
     	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, wfId);
     	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
-    	dBase.loadData(0);
+    	dBase.setNodeId("startevent1");
     	dBase.initData(null);
-    	dBase.initWFDataComponent();
+    	dBase.initWFDataComponent(wfd.getId());
+    	
+    	WindowDefine wd = new WindowDefine();
+    	wd.setWindowTitle("abc");
+    	wd.setWindowURL("/workflow/wfrequest.jsf");
+    	wd.setWindowType(WindowData.CUSTOM_WINDOW);
+    	wd.setWindowWidth(1120);
+    	wd.setWindowHeight(700);
+    	
+    	windowManager.openNewWindow("wf" + wfId, dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
+    	this.getWindowData().setHasCancelButton(true);
+    	
     	Utility.executeJavaScript("wfSelectPanel.hide();");
+    	
     }
 
 }

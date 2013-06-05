@@ -17,6 +17,10 @@ public abstract class WFDataBase {
 	private String url;
 
 	private long attachmentId;
+	
+	private int windowHeight;
+	
+	private int windowWidth;
 
 	public String getUrl() {
 		return url;
@@ -50,13 +54,29 @@ public abstract class WFDataBase {
 		this.attachmentId = attachmentId;
 	}
 
+	public int getWindowHeight() {
+		return windowHeight;
+	}
+
+	public void setWindowHeight(int windowHeight) {
+		this.windowHeight = windowHeight;
+	}
+
+	public int getWindowWidth() {
+		return windowWidth;
+	}
+
+	public void setWindowWidth(int windowWidth) {
+		this.windowWidth = windowWidth;
+	}
+
 	public String nextTransaction(String nodeName) {return null;}
 
 	public String toHtml() { return "";}
 
 	public void validData() throws Exception {}
 
-	public abstract void initWFDataComponent() throws Exception;
+	public abstract void initWFDataComponent(long wfId) throws Exception;
 
 	public abstract void initData(Object obj) throws Exception;
 

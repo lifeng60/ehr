@@ -4,16 +4,13 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:p="http://primefaces.org/ui"
 	xmlns:zhjin="http://java.sun.com/jsf/composite/component"
-	xmlns:composite="http://java.sun.com/jsf/composite"
 	xmlns:zh="http://www.zhjin.com/custom"
-	template="../template/dialogtemplate.xhtml"> 
+	template="../template/base.xhtml">
 
-	<ui:define name="title">
-		#{windowData.windowTitle}
-	</ui:define>
-	<ui:define name="dialogcontent">
-		<zhjin:objectEdit value="#{windowData.objMap['WFObjectData']}">
-		</zhjin:objectEdit>
-
-	</ui:define>
+	<ui:define name="pagecontent">
+		<h:form>
+			<p:commandButton value="test" actionListener="#{ehrTestBean.ehrTestClick}">
+			</p:commandButton>
+		</h:form>
+      </ui:define>
 </ui:composition>
