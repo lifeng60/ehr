@@ -587,13 +587,19 @@ public class WfManager extends BeanBase {
     	dBase.setNodeId("startevent1");
     	dBase.initData(null);
     	dBase.initWFDataComponent(wfd.getId());
-    	
+    	if (wfd.getDataShow() > 0) {
+    		dBase.setUrl(Utility.baseURL() + "/sys/showdbpage?id=" + wfd.getDataShow() + "&v=" 
+    				+ dbUtility.getEntity(SysLargeText.class, wfd.getDataShow()).getVersion());
+    	} else {
+    		dBase.setUrl("");
+    	}
     	WindowDefine wd = new WindowDefine();
     	wd.setWindowTitle("abc");
     	wd.setWindowURL("/workflow/wfrequest.jsf");
     	wd.setWindowType(WindowData.CUSTOM_WINDOW);
-    	wd.setWindowWidth(1120);
+    	wd.setWindowWidth(1050);
     	wd.setWindowHeight(700);
+    	
     	
     	windowManager.openNewWindow("wf" + wfId, dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
     	this.getWindowData().setHasCancelButton(true);

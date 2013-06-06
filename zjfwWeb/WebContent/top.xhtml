@@ -16,7 +16,7 @@
 		</div>
 		<div style="position:absolute;top:0px;right:0px;width:87px;height:40px;background-image:url(./resources/images/top3.jpg)">
 		</div>
-		<h:form id="form" target="leftFrame" prependId="false">
+		<h:form id="form" prependId="false" enctype="multipart/form-data">
 			<p:toolbar style="height:20px;">
 				<p:toolbarGroup>
 					<div style="margin-top:2px;margin-left:5px;">
@@ -35,10 +35,11 @@
                 <ul id="menuul">        
                    	<ui:repeat var="row" value="#{userSession.menuMap['SYSTEM'].moduleList}">
                    		<li>
-                   			<p:commandLink action="#{sysMenuManager.moduleClick}" onclick="moduleClick(event);showmenuframe();" ajax="false">
+                   			<h:commandLink action="#{sysMenuManager.moduleClick}" onclick="moduleClick(event);" 
+                   				target="leftFrame">
                    				<f:param name="menuId" value="#{row.id}"></f:param>
                 	          		<span>#{row.label}</span>
-               	          	</p:commandLink>
+               	          	</h:commandLink>
                    		</li>
                    	</ui:repeat>                 
                 </ul>						

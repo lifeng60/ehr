@@ -4,8 +4,6 @@
  */
 package com.zhjin.sys;
 
-import java.util.Map;
-
 import javax.faces.application.ViewHandler;
 import javax.faces.application.ViewHandlerWrapper;
 import javax.faces.component.UIViewRoot;
@@ -51,8 +49,6 @@ public class ZhjinViewHandler extends ViewHandlerWrapper {
 				return _oldUrl;
 			}
 		} else {
-			
-			_qStr = _qStr.replace('?', '&');
 			return _oldUrl + "?" + _qStr;
 		}
 

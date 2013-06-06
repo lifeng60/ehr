@@ -76,7 +76,12 @@ function openWindowWithName(url, windowName, width, height) {
 	var x = parseInt((screen.width  - width) / 2.0);  
 	var y = parseInt((screen.height - height) / 2.0) - 50; 
     var win = window.open(url, windowName, "top=" + y + ",left=" + x + ",menubar=no,scrollbars=no,width=" + width + ",height=" + height + ",resizable=no,location=no" );
-    win.focus();
+    if(navigator.userAgent.indexOf("MSIE")>0) {
+    	win.focus();
+    } else {
+    	win.blur();
+    	setTimeout(win.focus, 0);
+    }
 }
 
 function moduleClick(event) {

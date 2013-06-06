@@ -9,9 +9,9 @@
 
 	<ui:define name="pagecontent">
 		<h:form>
-			<p:commandButton value="test" actionListener="#{ehrTestBean.ehrTestClick}">
+			<p:commandButton value="test" onclick="alert(navigator.userAgent);">
 			</p:commandButton>
-			<p:commandButton value="dialogTest" action="dialog:test1?modal=true"/>
+			<p:commandButton value="dialogTest" action="dialog:/error/error500?modal=true"/>
 		</h:form>
       </ui:define>
 </ui:composition>
