@@ -462,3 +462,7 @@ div h3 {
 .ui-commandlink {
 	text-decoration: none;
 }
+
+.hide-column-names table thead tr {
+    display: none;
+}

@@ -1,6 +1,5 @@
 /**
  * Copyright zhangjin(zhjin@vip.163.com)
- * Licensed under GNU GENERAL PUBLIC LICENSE
  */
 package com.zhjin.wfsys;
 
@@ -22,13 +21,23 @@ public abstract class WFDataBase {
 	
 	private int windowWidth;
 
-	public String getUrl() {
-		return url;
-	}
+	public String nextTransaction(String nodeName) {return null;}
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+	public String toHtml() { return "";}
+
+	public void validData() throws Exception {}
+
+	public abstract void initWFDataComponent(long wfId) throws Exception;
+
+	public abstract void initData(Object obj) throws Exception;
+
+	public abstract void loadData(long dataId) throws Exception;
+
+	public abstract long getDataId();
+
+	public abstract void saveData() throws Exception;
+
+	public abstract void dataProcess() throws Exception;
 
 	public String getWfInstanceId() {
 		return wfInstanceId;
@@ -44,6 +53,14 @@ public abstract class WFDataBase {
 
 	public void setNodeId(String nodeId) {
 		this.nodeId = nodeId;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
 	}
 
 	public long getAttachmentId() {
@@ -69,23 +86,5 @@ public abstract class WFDataBase {
 	public void setWindowWidth(int windowWidth) {
 		this.windowWidth = windowWidth;
 	}
-
-	public String nextTransaction(String nodeName) {return null;}
-
-	public String toHtml() { return "";}
-
-	public void validData() throws Exception {}
-
-	public abstract void initWFDataComponent(long wfId) throws Exception;
-
-	public abstract void initData(Object obj) throws Exception;
-
-	public abstract void loadData(long dataId) throws Exception;
-
-	public abstract long getDataId();
-
-	public abstract void saveData() throws Exception;
-
-	public abstract void dataProcess() throws Exception;
 
 }
