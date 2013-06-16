@@ -8,10 +8,10 @@
 	template="../template/base.xhtml">
 
 	<ui:define name="pagecontent">
-		<h:form>
+		<h:form enctype="multipart/form-data">
 			<p:commandButton value="test" onclick="alert(navigator.userAgent);">
 			</p:commandButton>
-			<p:commandButton value="dialogTest" action="dialog:/error/error500?modal=true"/>
+			<p:commandButton value="dialogTest" actionListener="#{testBean.testClick}"/>
 		</h:form>
       </ui:define>
 </ui:composition>

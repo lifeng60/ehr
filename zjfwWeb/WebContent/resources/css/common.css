@@ -418,14 +418,12 @@ div h3 {
 	border-bottom-left-radius: 0px;
 	-moz-border-radius-bottomright: 0px;
 	-webkit-border-bottom-right-radius: 0px;
-	border-bottom-right-radius: 0px;
-	height:80px;	
+	border-bottom-right-radius: 0px;	
 }
 
 .ui-growl {
-	left:0px;
-	top:0px;
-	width: 100%;
+	right:3px;
+	top:3px;
 }
 
 .ui-growl-item-container {

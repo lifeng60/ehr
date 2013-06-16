@@ -5,6 +5,7 @@ package com.zhjin.wfsys;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,7 +16,10 @@ import java.util.zip.ZipInputStream;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 import javax.imageio.ImageIO;
 import javax.inject.Named;
@@ -30,18 +34,24 @@ import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.primefaces.component.datatable.DataTable;
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
 import com.zhjin.base.entity.SysLargeText;
+import com.zhjin.base.entity.SysUploadFile;
 import com.zhjin.context.ConvManager;
 import com.zhjin.sys.entity.WindowDefine;
 import com.zhjin.sys.manager.ObjectEditManager;
 import com.zhjin.sys.manager.TableManager;
 import com.zhjin.sys.window.WindowData;
 import com.zhjin.sys.window.WindowManager;
+import com.zhjin.util.AppException;
 import com.zhjin.util.ArgMap;
 import com.zhjin.util.Audit;
 import com.zhjin.util.BeanBase;
+import com.zhjin.util.EUser;
 import com.zhjin.util.FileUploadData;
 import com.zhjin.util.SysUtil;
 import com.zhjin.util.Utility;
@@ -312,13 +322,18 @@ public class WfManager extends BeanBase {
 
     }
     
-    public void newWorkFlow(String wfKey, WFDataBase wfData, List<Integer> fileIdList, int empId) throws Exception {
+    public void newWorkFlow(WFDataBase wfData, List<Long> fileIdList, long empId) throws Exception {
 
+    	EUser user = null;
     	if (wfData != null) {
     		wfData.validData();
     	}
+    	
+    	if (empId > 0) {
+    		user = dbUtility.getEntity("select * from euserview where id = :id", EUser.class, new ArgMap().add("id", empId));
+    	}
 
-    	WorkflowDefine wfd = dbUtility.getEntity("select * from workflowdefine where wfKey = :wfKey", WorkflowDefine.class, new ArgMap().add("wfKey", wfKey));
+    	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, wfData.getWfId());
 
     	RuntimeService runtime = WFUtil.processEngine.getRuntimeService();
 
@@ -333,31 +348,49 @@ public class WfManager extends BeanBase {
     	instance.setWfName(wfd.getWfName());
     	instance.setWfNameCN(wfd.getWfNameCN());
     	instance.setWfDefineId(wfd.getDefineId());
+    	instance.setUrgentLevel(wfData.getUrgentLevel());
+    	instance.setReqTitle(wfData.getRequireTitle());
+    	if (user != null) {
+    		instance.setReqEmpId(empId);
+    		instance.setReqLoginName(user.getLoginName());
+    		instance.setReqName(user.getName());
+    		instance.setReqDepId(user.getDepId());
+    	}
 
     	WFInstanceActor actor = new WFInstanceActor();
     	actor.setActorEmpId(empId);
     	actor.setRealActorEmpId(empId);
+    	if (user != null) {
+    		actor.setActorLoginName(user.getLoginName());
+    		actor.setActorName(user.getName());
+    		actor.setRealActorLoginName(user.getLoginName());
+    		actor.setRealActorName(user.getName());
+    	}
     	actor.setBeginTime(new Date());
     	actor.setEndTime(actor.getBeginTime());
-    	actor.setNodeId("start");
+    	actor.setNodeId(wfData.getNodeId());
     	actor.setNodeName("开始");
     	actor.setApplyResult("申请");
     	actor.setWfInstanceId(processInstance.getId());
     	dbUtility.save(actor, true);
 
-    	if (wfData != null) {
-    		wfData.validData();
-    		wfData.saveData();
-    	}
+		wfData.saveData();
 
     	instance.setDataId(wfData.getDataId());
-    	initActivityNode(processInstance, empId, "");
+    	
+    	for (long fileid : fileIdList) {
+    		WfAttachFile _f = new WfAttachFile();
+    		_f.setWfInstanceId(instance.getWfInstanceId());
+    		_f.setFileId(fileid);
+    		dbUtility.save(_f);
+    	}
+    	initActivityNode(processInstance, empId, wfData.getNodeId());
 
     	dbUtility.save(instance);
 
     }
 
-    private void initActivityNode(ProcessInstance processInstance, int preEmpId, String preNodeId) throws Exception {
+    private void initActivityNode(ProcessInstance processInstance, long preEmpId, String preNodeId) throws Exception {
 
     	RuntimeService runtime = WFUtil.processEngine.getRuntimeService();
 
@@ -371,15 +404,40 @@ public class WfManager extends BeanBase {
     				WFInstanceActor.class, new ArgMap().add("wfInstanceId", processInstance.getProcessInstanceId()).add("nodeId", _nn));
 
     		if (actor == null) {
-
+    			long actorEmpId = 0;
+    			EUser actorUser = null;
+    			WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
+    	       			WFNodeProperty.class,
+    	       			new ArgMap().add("wfId", wfd.getId())
+    	       			.add("nodeId", _nn));
+    			if (nodeProperty == null) {
+    				throw new AppException("流程节点未定义!");
+    			}
     			actor = new WFInstanceActor();
     			actor.setWfInstanceId(processInstance.getProcessInstanceId());
     			actor.setNodeId(_nn);
     			actor.setNodeName(dbUtility.getEntity("select * from wfnodeproperty where wfId = :wfId and nodeId = :nodeId",
     					WFNodeProperty.class, new ArgMap().add("wfId", wfd.getId()).add("nodeId", _nn)).getNodeName());
+    			if (Utility.notEmptyString(nodeProperty.getActorEL())) {
+    				actorEmpId = (Long)(Utility.getELValue(nodeProperty.getActorEL()));
+    			} else if (Utility.notEmptyString(nodeProperty.getActorQueryString())) {
+    				actorEmpId = ((BigDecimal)dbUtility.getData((String)Utility.getELValue(nodeProperty.getActorQueryString()), null)).longValue();
+    			}
+    			if (actorEmpId > 0) {
+    				actorUser = dbUtility.getEntity("select * from euserview where id = :id", EUser.class, new ArgMap().add("id", actorEmpId));
+    				if (actorUser == null) {
+    					throw new Exception("流程节点(" + nodeProperty.getNodeName() + ")未指定审批人");
+    				}
+    			} else {
+    				throw new Exception("流程节点(" + nodeProperty.getNodeName() + ")未指定审批人");
+    			}
+    			actor.setActorEmpId(actorUser.getId());
+    			actor.setActorLoginName(actorUser.getLoginName());
+    			actor.setActorName(actorUser.getName());
     			actor.setBeginTime(new Date());
     			actor.setPreEmpId(preEmpId);
-
+    			actor.setPreNodeId(preNodeId);
+    			
     			dbUtility.save(actor);
 
     		}
@@ -389,7 +447,6 @@ public class WfManager extends BeanBase {
     }
 
     public void testWrokFlow(Object obj) throws Exception {
-    	newWorkFlow(((WorkflowDefine)obj).getWfKey(), (WFDataBase)Class.forName(((WorkflowDefine)obj).getObjectName()).newInstance(), new ArrayList<Integer>(), 100);
     }
     
     
@@ -583,9 +640,11 @@ public class WfManager extends BeanBase {
 
     	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, wfId);
     	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
+    	dBase.setWfId(wfId);
+    	dBase.setRequestType(WFDataBase.WF_NEW);
     	dBase.setNodeId("startevent1");
     	dBase.initData(null);
-    	dBase.initWFDataComponent(wfd.getId());
+    	dBase.initWFDataComponent();
     	if (wfd.getDataShow() > 0) {
     		dBase.setUrl(Utility.baseURL() + "/sys/showdbpage?id=" + wfd.getDataShow() + "&v=" 
     				+ dbUtility.getEntity(SysLargeText.class, wfd.getDataShow()).getVersion());
@@ -601,10 +660,161 @@ public class WfManager extends BeanBase {
     	
     	
     	windowManager.openNewWindow("wf" + wfId, dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
-    	this.getWindowData().setHasCancelButton(true);
+    	this.getWindowData().getObjMap().put("wfid", wfd.getDefineId());
     	
     	Utility.executeJavaScript("wfSelectPanel.hide();");
+  	
+    }
+    
+    public void applyWf(Object obj) throws Exception {
     	
+    }
+    
+    public void viewWf(Object obj) throws Exception {
+    	WFInstance instance = (WFInstance)obj;
+    	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, instance.getWfId());
+    	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
+    	dBase.setWfId(instance.getWfId());
+    	dBase.setRequestType(WFDataBase.WF_VIEW);
+    	dBase.setWfInstanceId(instance.getWfDefineId());
+    	dBase.setReadOnly(true);
+    	dBase.setRequireTitle(instance.getReqTitle());
+    	dBase.setUrgentLevel(instance.getUrgentLevel());
+    	dBase.setWfRemark(instance.getRemark());
+    	dBase.setNodeId("");
+    	dBase.loadData(instance.getDataId());
+    	dBase.initWFDataComponent();
+    	if (wfd.getDataShow() > 0) {
+    		dBase.setUrl(Utility.baseURL() + "/sys/showdbpage?id=" + wfd.getDataShow() + "&v=" 
+    				+ dbUtility.getEntity(SysLargeText.class, wfd.getDataShow()).getVersion());
+    	} else {
+    		dBase.setUrl("");
+    	}
+    	dBase.setAttachFileList(dbUtility.getDataList("select * from sysuploadfile where id in " +
+    			"(select fileid from wfattachfile where wfInstanceId = :wfInstanceId)", 
+    			SysUploadFile.class, new ArgMap().add("wfInstanceId", instance.getWfInstanceId())));
+    	WindowDefine wd = new WindowDefine();
+    	wd.setWindowTitle("流程查看:" + instance.getWfInstanceId());
+    	wd.setWindowURL("/workflow/wfrequest.jsf");
+    	wd.setWindowType(WindowData.CUSTOM_WINDOW);
+    	wd.setWindowWidth(1050);
+    	wd.setWindowHeight(700);
+    	
+    	
+    	windowManager.openNewWindow("viewwf", dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
+    	this.getWindowData().getObjMap().put("wfid", wfd.getDefineId());
+    }
+    
+    public void cancelWF(Object obj) throws Exception {
+    	
+    }
+    
+    @Audit
+    public void tempSave(ActionEvent event) throws Exception {
+    	
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	db.saveData();
+    	db.loadData(db.getDataId());
+    	FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("提示:", "信息已保存!"));  
+    	Utility.updateComponent(Utility.getComponentId("growl"));
+    }
+    
+    @Audit
+    public void submitWf(ActionEvent event) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	if (!Utility.notEmptyString(db.getRequireTitle())) {
+    		throw new AppException("标题不能为空!");
+    	}
+    	db.validData();
+    	List<Long> fileList = new ArrayList<Long>();
+    	for (SysUploadFile suf : db.getAttachFileList()) {
+    		fileList.add(suf.getId());
+    	}
+    	newWorkFlow(db, fileList, this.getUser().getUserId());
+    	this.getWindowData().closeWindow();
+    }
+    
+    @Audit
+    public void cancelWf(ActionEvent event) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	
+    	if (!Utility.notEmptyString(db.getWfInstanceId())) {
+    		for (SysUploadFile suf : db.getAttachFileList()) {
+    			sysUtil.deleteFile(suf.getId());
+    		}
+    	}
+    	this.getWindowData().closeWindow();
+    }
+    
+    @Audit
+    public void uploadAttachFile(FileUploadEvent event) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	
+    	long fileId = sysUtil.uploadFile(0, "/workflow", event.getFile());
+    	db.getAttachFileList().add(dbUtility.getEntity(SysUploadFile.class, fileId));
+    	
+    	if (Utility.notEmptyString(db.getWfInstanceId())) {
+    		WfAttachFile waf = new WfAttachFile();
+    		waf.setWfInstanceId(db.getWfInstanceId());
+    		waf.setFileId(fileId);
+    		dbUtility.save(waf, true);
+    	}
+
+    	RequestContext.getCurrentInstance().update(Utility.getComponentId("attachfile"));
+    	RequestContext.getCurrentInstance().update(Utility.getComponentId("filelisttable"));
+    	
+    }
+    
+    @Audit
+    public void deleteAttachFile(ActionEvent event) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	
+    	long fileId = (Long)event.getComponent().getAttributes().get("fileId");
+    	
+    	if (Utility.notEmptyString(db.getWfInstanceId())) {
+    		WfAttachFilePK pk = new WfAttachFilePK();
+    		pk.setWfInstanceId(db.getWfInstanceId());
+    		pk.setFileId(fileId);
+    		WfAttachFile af = dbUtility.getEntity(WfAttachFile.class, pk);
+    		if (af != null) {
+    			dbUtility.delete(af, true);
+    		}
+    	}
+    	
+    	sysUtil.deleteFile(fileId);
+    	
+    	List<SysUploadFile> _newFileList = new ArrayList<SysUploadFile>();
+    	for (SysUploadFile suf : db.getAttachFileList()) {
+    		if (suf.getId() != fileId) {
+    			_newFileList.add(suf);
+    		}
+    	}
+    	db.setAttachFileList(_newFileList);
+    	RequestContext.getCurrentInstance().update(Utility.getComponentId("filelisttable"));
+    	RequestContext.getCurrentInstance().update(Utility.getComponentId("attachfile"));
+    	
+    }
+    
+    @Audit
+    public void fileNameChange(ValueChangeEvent event) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	long fileId = (Long)event.getComponent().getAttributes().get("fileId");
+    	
+    	event.getComponent().processUpdates(FacesContext.getCurrentInstance());
+    	
+    	int _pos = 0;
+    	for (; _pos < db.getAttachFileList().size(); _pos++) {
+    		if (db.getAttachFileList().get(_pos).getId() == fileId) {
+    			db.getAttachFileList().set(_pos, dbUtility.update(db.getAttachFileList().get(_pos), true));
+    		}
+    	}
+    	
+    	DataTable dt = (DataTable)event.getComponent().findComponent("filelisttable");
+    	dt.setEditingRow(false);
+
+    	FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("提示:", "文件名已更新为:" + event.getNewValue()));  
+    	Utility.updateComponent(Utility.getComponentId("filelisttable"));
+    	Utility.updateComponent(Utility.getComponentId("growl"));
     }
 
 }

@@ -63,6 +63,9 @@ public class WFInstance extends EntityBase {
 	@Column(length=20)
 	private String endStatus;
 	
+	@Column
+	private long urgentLevel;
+	
 	@Column(length=1000)
 	private String remark;
 
@@ -200,6 +203,14 @@ public class WFInstance extends EntityBase {
 
 	public void setAttachFileId(long attachFileId) {
 		this.attachFileId = attachFileId;
+	}
+
+	public long getUrgentLevel() {
+		return urgentLevel;
+	}
+
+	public void setUrgentLevel(long urgentLevel) {
+		this.urgentLevel = urgentLevel;
 	}
 
 	@Override

@@ -3,6 +3,8 @@
  */
 package com.zhjin.test;
 
+import java.util.HashMap;
+
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
@@ -10,6 +12,7 @@ import javax.faces.event.ActionEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.primefaces.context.RequestContext;
 import org.primefaces.event.FileUploadEvent;
 
 import com.zhjin.sys.manager.TableManager;
@@ -17,6 +20,7 @@ import com.zhjin.sys.manager.TreeManager;
 import com.zhjin.sys.menu.SysMenuManager;
 import com.zhjin.sys.window.WindowData;
 import com.zhjin.sys.window.WindowManager;
+import com.zhjin.util.ArgMap;
 import com.zhjin.util.Audit;
 import com.zhjin.util.BeanBase;
 import com.zhjin.util.SysUtil;
@@ -60,7 +64,8 @@ public class TestBean extends BeanBase {
 //    	System.out.println(ui.getFacetCount());
 //    	ui.getChildren().clear();
 //    	ft.apply(facesContext, ui);
-
+    	System.out.println("open dialog ...");
+    	RequestContext.getCurrentInstance().openDialog("/test/test1", new ArgMap().add("modal", true).add("contentHeight", 300).add("resizable", false), null);
     }
 
     @Audit

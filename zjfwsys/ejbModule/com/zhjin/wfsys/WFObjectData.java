@@ -4,9 +4,11 @@
 package com.zhjin.wfsys;
 
 import com.zhjin.base.EntityHasIdBase;
+import com.zhjin.base.entity.OperateDataBase;
 import com.zhjin.sys.entity.ViewObjectProperty;
 import com.zhjin.sys.manager.ObjectEditData;
 import com.zhjin.util.ArgMap;
+import com.zhjin.util.EUser;
 import com.zhjin.util.Utility;
 
 public class WFObjectData extends WFDataBase {
@@ -57,45 +59,25 @@ public class WFObjectData extends WFDataBase {
 	}
 
 	@Override
-	public void initWFDataComponent(long wfId) throws Exception {
+	public void initWFDataComponent() throws Exception {
 
        	WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
        			WFNodeProperty.class,
-       			new ArgMap().add("wfId", wfId)
+       			new ArgMap().add("wfId", this.getWfId())
        			.add("nodeId", this.getNodeId()));
 
        	Utility.getObjectEditManager().initObjectEditData(this.getObjectData(), this.getObjectData().getEditData(), "", "", "Title",
-       			nodeProperty.getReadOnlyColumns(), nodeProperty.getHideColumns());
+       			(nodeProperty == null ? "" : nodeProperty.getReadOnlyColumns()), 
+       			(nodeProperty == null ? "" : nodeProperty.getHideColumns()));
        	
-       	if (nodeProperty.getDialogHeight() > 0) {
-       		this.setWindowHeight(nodeProperty.getDialogHeight());
-       	}
-       	if (nodeProperty.getDialogWidth() > 0) {
-       		this.setWindowWidth(nodeProperty.getDialogWidth());
-       	}
-       	if (Utility.notEmptyString(nodeProperty.getApplyURL()) && !Utility.notEmptyString(this.getUrl())) {
+       	if (nodeProperty != null && Utility.notEmptyString(nodeProperty.getApplyURL()) && !Utility.notEmptyString(this.getUrl())) {
        		this.setUrl(nodeProperty.getApplyURL());
        	}
        	if (this.getWindowWidth() == 0 || this.getWindowHeight() == 0) {
-       		WorkflowDefine wfd = Utility.getDBUtility().getEntity(WorkflowDefine.class, wfId);
-       		if (wfd.getWidth() > 0) {
-       			this.setWindowHeight(wfd.getWidth());
-       		}
-       		if (wfd.getHeight() > 0) {
-       			this.setWindowHeight(wfd.getHeight());
-       		}
+       		WorkflowDefine wfd = Utility.getDBUtility().getEntity(WorkflowDefine.class, this.getWfId());
            	if (Utility.notEmptyString(wfd.getUrl()) && !Utility.notEmptyString(this.getUrl())) {
            		this.setUrl(wfd.getUrl());
            	}
-       	}
-       	if (this.getWindowWidth() == 0 || this.getWindowHeight() == 0) {
-       		ViewObjectProperty _vop = Utility.getDBUtility().getEntity(ViewObjectProperty.class, this.getObjectName());
-       		if (_vop.getEditWidth() > 0) {
-       			this.setWindowWidth(_vop.getEditWidth());
-       		}
-       		if (_vop.getEditHeight() > 0) {
-       			this.setWindowHeight(_vop.getEditHeight());
-       		}
        	}
        	
 	}
@@ -104,6 +86,15 @@ public class WFObjectData extends WFDataBase {
 	public void initData(Object obj) throws Exception {
 		ViewObjectProperty vop = Utility.getDBUtility().getEntity(ViewObjectProperty.class, this.getObjectName());
 		this.getObjectData().setEditData(Class.forName(vop.getObjectClassName()).newInstance());
+		if (this.getObjectData().getEditData() instanceof OperateDataBase) {
+			OperateDataBase _op = (OperateDataBase)this.getObjectData().getEditData();
+			EUser _u = Utility.getDBUtility().getEntity("select * from euserview where id = :userId", 
+					EUser.class, new ArgMap().add("userId", Utility.getSysUtil().getUser().getUserId()));
+			_op.setOperEmpId(_u.getId());
+			_op.setOperLoginName(_u.getLoginName());
+			_op.setOperName(_u.getName());
+			_op.setDepId(_u.getDepId());
+		}
 	}
 
 	@Override

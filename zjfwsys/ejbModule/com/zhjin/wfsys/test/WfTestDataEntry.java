@@ -8,10 +8,10 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
-import com.zhjin.base.EntityHasIdBase;
+import com.zhjin.base.entity.OperateDataBase;
 
 @Entity
-public class WfTestDataEntry extends EntityHasIdBase {
+public class WfTestDataEntry extends OperateDataBase {
 	@Column
 	private int i;
 	

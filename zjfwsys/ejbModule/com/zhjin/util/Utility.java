@@ -355,6 +355,10 @@ public class Utility {
 		para.setValue(obj);
 		return para;
 	}
+	
+	public static String getComponentId(String id) {
+		return (String)Utility.getELValue("#{p:component('" + id + "')}");
+	}
 
 	public static CommandButton getCommandButton(WindowCommandDefine comm) {
 

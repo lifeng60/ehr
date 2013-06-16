@@ -3,11 +3,22 @@
  */
 package com.zhjin.wfsys;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.zhjin.base.entity.SysUploadFile;
+
 /**
  * 流程数据基类
  * @author zhjin
  */
 public abstract class WFDataBase {
+	
+	public static final String WF_NEW = "NEW";
+	public static final String WF_APPLY = "APPLY";
+	public static final String WF_VIEW = "VIEW";
+	
+	private long wfId;
 
 	private String wfInstanceId;
 
@@ -17,9 +28,25 @@ public abstract class WFDataBase {
 
 	private long attachmentId;
 	
+	private int attachFileNum;
+	
+	private List<SysUploadFile> attachFileList = new ArrayList<SysUploadFile>();
+	
+	private int applyHistoryNum;
+	
 	private int windowHeight;
 	
 	private int windowWidth;
+	
+	private boolean readOnly;
+	
+	private String requestType;
+	
+	private long urgentLevel = 1;
+	
+	private String requireTitle;
+	
+	private String wfRemark;
 
 	public String nextTransaction(String nodeName) {return null;}
 
@@ -27,7 +54,7 @@ public abstract class WFDataBase {
 
 	public void validData() throws Exception {}
 
-	public abstract void initWFDataComponent(long wfId) throws Exception;
+	public abstract void initWFDataComponent() throws Exception;
 
 	public abstract void initData(Object obj) throws Exception;
 
@@ -85,6 +112,78 @@ public abstract class WFDataBase {
 
 	public void setWindowWidth(int windowWidth) {
 		this.windowWidth = windowWidth;
+	}
+
+	public int getAttachFileNum() {
+		return this.attachFileList.size();
+	}
+
+	public void setAttachFileNum(int attachFileNum) {
+		this.attachFileNum = attachFileNum;
+	}
+
+	public int getApplyHistoryNum() {
+		return applyHistoryNum;
+	}
+
+	public void setApplyHistoryNum(int applyHistoryNum) {
+		this.applyHistoryNum = applyHistoryNum;
+	}
+
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
+	}
+
+	public String getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;
+	}
+
+	public List<SysUploadFile> getAttachFileList() {
+		return attachFileList;
+	}
+
+	public void setAttachFileList(List<SysUploadFile> attachFileList) {
+		this.attachFileList = attachFileList;
+	}
+
+	public long getWfId() {
+		return wfId;
+	}
+
+	public void setWfId(long wfId) {
+		this.wfId = wfId;
+	}
+
+	public long getUrgentLevel() {
+		return urgentLevel;
+	}
+
+	public void setUrgentLevel(long urgentLevel) {
+		this.urgentLevel = urgentLevel;
+	}
+
+	public String getRequireTitle() {
+		return requireTitle;
+	}
+
+	public void setRequireTitle(String requireTitle) {
+		this.requireTitle = requireTitle;
+	}
+
+	public String getWfRemark() {
+		return wfRemark;
+	}
+
+	public void setWfRemark(String wfRemark) {
+		this.wfRemark = wfRemark;
 	}
 
 }
