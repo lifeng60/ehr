@@ -21,6 +21,10 @@
 							actionListener="#{wfManager.tempSave}"
 							rendered="false">
 						</p:commandButton>
+						<p:commandButton id="wfimage" value="流程图" icon="ui-icon-image">
+						</p:commandButton>
+						<p:commandButton id="attachfile" value="附件(#{windowData.inData.attachFileNum})" icon="ui-icon-document">
+						</p:commandButton>
 						<p:commandButton value="审批" icon="ui-icon-tag"
 							actionListener="#{wfManager.showApplyDialog}"
 							rendered="#{windowData.inData.requestType == 'APPLY'}">
@@ -28,15 +32,12 @@
 						<p:commandButton id="submitwf" value="提交" icon="ui-icon-check"
 							 rendered="#{windowData.inData.requestType == 'NEW'}">
 						</p:commandButton>
-						<p:commandButton id="attachfile" value="附件(#{windowData.inData.attachFileNum})" icon="ui-icon-document">
-						</p:commandButton>
-						<p:commandButton id="wfimage" value="流程图" icon="ui-icon-image">
-						</p:commandButton>
 					</p:toolbarGroup>
 					<p:toolbarGroup align="right" style="padding-top:0px;padding-right:10px;">
 						<p:commandButton value="取消" icon="ui-icon-cancel"
 							onclick="if (confirm('确认取消流程申请 ( 取消操作不可恢复 ) ?') == false) return false;"
-							actionListener="#{wfManager.cancelWf}">
+							actionListener="#{wfManager.cancelWf}"
+							rendered="#{windowData.inData.requestType == 'NEW'}">
 						</p:commandButton>
 					</p:toolbarGroup>
 				</p:toolbar>
@@ -45,12 +46,14 @@
 				<div style="position:absolute;top:0px;left:0px;height:30px;right:0px;border:solid;border-color:#a6c9e2;border-width:1px;border-top:none;border-left:none;border-right:none;">
 					<zh:div styleClass="dive2" style="padding-top:5px;">
 						<label class="fieldLabel"><h:outputText value="标题:"/></label>
-						<p:inputText value="#{windowData.inData.requireTitle}" styleClass="inpute2">
+						<p:inputText value="#{windowData.inData.requireTitle}" styleClass="inpute2"
+							disabled="#{windowData.inData.requestType != 'NEW'}">
 						</p:inputText>
 					</zh:div>
 					<zh:div styleClass="dive1" style="padding-top:5px;">
 						<label class="fieldLabel"><h:outputText value="紧急程度:"/></label>
-						<h:selectOneMenu value="#{windowData.inData.urgentLevel}" styleClass="selectmenue1">
+						<h:selectOneMenu value="#{windowData.inData.urgentLevel}" styleClass="selectmenue1"
+							disabled="#{windowData.inData.requestType != 'NEW'}">
 							<f:selectItem itemValue="1" itemLabel="普通"/>
 							<f:selectItem itemValue="2" itemLabel="紧急"/>
 						</h:selectOneMenu>
@@ -59,12 +62,16 @@
 				<div style="position:absolute;top:31px;left:0px;bottom:0px;width:100%;overflow:auto;background-color:white;">
 					<div style="width:100%;height:5px;clear:both;"></div>
 					<ui:include src="#{windowData.inData.url}" />
-					<p:separator rendered="#{windowData.inData.requestType != 'NEW'}"></p:separator>
-					<zh:div style="padding-left:10px;"
+					<div style="float:left;"></div>
+					<p:separator rendered="#{windowData.inData.requestType != 'NEW'}" style="width:99%;">
+					</p:separator>
+					<zh:div style="padding-left:10px;float:left;"
 						rendered="#{windowData.inData.requestType != 'NEW'}">	
 						<h:outputText value="流程备注信息:" style="color:#2e6e9e;" />
-						<h:outputText value="#{windowData.inData.wfRemark}">
-						</h:outputText>
+						<div style="padding-left:20px;float:left;padding-top:5px;">
+							<h:outputText value="#{windowData.inData.wfRemark}" escape="false">
+							</h:outputText>
+						</div>
 					</zh:div>
 				</div>	    	
 		    </div>
@@ -73,7 +80,8 @@
 			<h:form id="abc" enctype="multipart/form-data">
 				<p:dataTable id="filelisttable" style="width:100%;" value="#{windowData.inData.attachFileList}" 
 					emptyMessage="" var="row" editable="true">
-					<p:column headerText="删除" style="width:20px;" styleClass="columncenter">
+					<p:column headerText="删除" style="width:20px;" styleClass="columncenter"
+						rendered="#{windowData.inData.requestType == 'NEW'}">
 						<p:commandLink styleClass="ui-icon ui-icon-trash"
 							actionListener="#{wfManager.deleteAttachFile}"
 							onclick="if (confirm('确认删除所选附件( #{row.fileName} )?') == false) return false;"
@@ -81,7 +89,8 @@
 							<f:attribute name="fileId" value="#{row.id}"></f:attribute>
 						</p:commandLink>
 					</p:column>
-					<p:column headerText="编辑">
+					<p:column headerText="编辑"
+						rendered="#{windowData.inData.requestType == 'NEW'}">
 						<p:rowEditor>
 						</p:rowEditor>
 					</p:column>
@@ -105,19 +114,26 @@
 							<f:convertNumber pattern="##,##0"/>
 						</h:outputText>
 					</p:column>
+					<p:column headerText="下载" styleClass="columncenter">
+						<p:commandLink actionListener="#{wfManager.downloadAttachFile}" styleClass="ui-icon ui-icon-arrowthick-1-s"
+							ajax="false">
+							<f:attribute name="fileId" value="#{row.id}"></f:attribute>
+						</p:commandLink>
+					</p:column>
 				</p:dataTable>
 				<p:fileUpload label="选择文件" 
 					uploadLabel="上传" showButtons="false"
 					mode="advanced"
 					style="padding-top:3px;"
 					fileUploadListener="#{wfManager.uploadAttachFile}"
-					auto="true">
+					auto="true"
+					rendered="#{windowData.inData.requestType == 'NEW'}">
 				</p:fileUpload>
 			</h:form>
 		</p:overlayPanel>
 		<p:overlayPanel for="form:wfimage" hideEffect="fade" dynamic="true">
-			<div style="margin:0px;padding:0px;overflow:auto;width:850px;height:500px;">
-				<img src="#{request.contextPath}/workflow/showworkflowimage?wfid=#{windowData.objMap['wfid']}" />
+			<div style="margin:0px;padding:0px;overflow:auto;width:1000px;height:600px;">
+				<img src="#{request.contextPath}/workflow/showworkflowimage?wfid=#{windowData.objMap['wfid']}&amp;instanceId=#{windowData.inData.wfInstanceId}" />				
 			</div>
 		</p:overlayPanel>
 		<p:overlayPanel for="form:submitwf" hideEffect="fade" dynamic="true"

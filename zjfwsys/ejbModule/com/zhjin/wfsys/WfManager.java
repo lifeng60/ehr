@@ -350,6 +350,7 @@ public class WfManager extends BeanBase {
     	instance.setWfDefineId(wfd.getDefineId());
     	instance.setUrgentLevel(wfData.getUrgentLevel());
     	instance.setReqTitle(wfData.getRequireTitle());
+    	instance.setRemark(wfData.getWfRemark());
     	if (user != null) {
     		instance.setReqEmpId(empId);
     		instance.setReqLoginName(user.getLoginName());
@@ -676,7 +677,7 @@ public class WfManager extends BeanBase {
     	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
     	dBase.setWfId(instance.getWfId());
     	dBase.setRequestType(WFDataBase.WF_VIEW);
-    	dBase.setWfInstanceId(instance.getWfDefineId());
+    	dBase.setWfInstanceId(instance.getWfInstanceId());
     	dBase.setReadOnly(true);
     	dBase.setRequireTitle(instance.getReqTitle());
     	dBase.setUrgentLevel(instance.getUrgentLevel());
@@ -700,13 +701,18 @@ public class WfManager extends BeanBase {
     	wd.setWindowWidth(1050);
     	wd.setWindowHeight(700);
     	
-    	
     	windowManager.openNewWindow("viewwf", dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
     	this.getWindowData().getObjMap().put("wfid", wfd.getDefineId());
+    	this.getWindowData().setReadOnly(true);
     }
     
     public void cancelWF(Object obj) throws Exception {
-    	
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	if (db.getRequestType().equals(WFDataBase.WF_NEW)) {
+    		for (SysUploadFile suf : db.getAttachFileList()) {
+    			dbUtility.delete(suf, true);
+    		}
+    	}
     }
     
     @Audit
@@ -725,7 +731,6 @@ public class WfManager extends BeanBase {
     	if (!Utility.notEmptyString(db.getRequireTitle())) {
     		throw new AppException("标题不能为空!");
     	}
-    	db.validData();
     	List<Long> fileList = new ArrayList<Long>();
     	for (SysUploadFile suf : db.getAttachFileList()) {
     		fileList.add(suf.getId());
@@ -815,6 +820,12 @@ public class WfManager extends BeanBase {
     	FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("提示:", "文件名已更新为:" + event.getNewValue()));  
     	Utility.updateComponent(Utility.getComponentId("filelisttable"));
     	Utility.updateComponent(Utility.getComponentId("growl"));
+    }
+    
+    @Audit
+    public void downloadAttachFile(ActionEvent event) throws Exception {
+    	long fileId = (Long)(event.getComponent().getAttributes().get("fileId"));
+    	sysUtil.downloadFile(fileId, "DOWNLOAD");
     }
 
 }
