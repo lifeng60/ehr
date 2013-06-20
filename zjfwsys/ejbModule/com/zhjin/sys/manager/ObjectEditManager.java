@@ -14,7 +14,6 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -22,7 +21,6 @@ import javax.persistence.Id;
 import com.zhjin.sys.entity.ObjectEditDefine;
 import com.zhjin.sys.entity.ViewObjectFieldProperty;
 import com.zhjin.sys.entity.ViewObjectProperty;
-import com.zhjin.sys.window.WindowData;
 import com.zhjin.util.ArgMap;
 import com.zhjin.util.Audit;
 import com.zhjin.util.BeanBase;
@@ -66,6 +64,10 @@ public class ObjectEditManager extends BeanBase {
     }
 
     public ObjectEditData initObjectEditData(ObjectEditData oed, Object obj, String processEL, String processCommandValue, String title, String readOnlyColumns, String hideColumns) throws Exception {
+    	return initObjectEditData(oed, obj, processEL, processCommandValue, title, readOnlyColumns, hideColumns, false);
+    }
+
+    public ObjectEditData initObjectEditData(ObjectEditData oed, Object obj, String processEL, String processCommandValue, String title, String readOnlyColumns, String hideColumns, boolean readOnly) throws Exception {
 
     	oed.setHideColumns((String)Utility.getELValue(hideColumns));
     	oed.setReadOnlyColumns((String)Utility.getELValue(readOnlyColumns));
@@ -102,7 +104,7 @@ public class ObjectEditManager extends BeanBase {
 		for (ViewObjectFieldProperty field : oed.getFieldList()) {
 
 			// 如果是主键字段或者是版本控制字段则设置成只读
-			field.setRunReadOnly(field.isReadOnly() || oed.getReadOnlyColumnsTree().contains(field.getFieldName().toUpperCase())
+			field.setRunReadOnly(readOnly || field.isReadOnly() || oed.getReadOnlyColumnsTree().contains(field.getFieldName().toUpperCase())
 					|| _idSet.contains(field.getFieldName().toUpperCase()));
 			field.setRunVisiabled(field.isVisiabled() && !oed.getHideColumnsTree().contains(field.getFieldName().toUpperCase()));
 		}

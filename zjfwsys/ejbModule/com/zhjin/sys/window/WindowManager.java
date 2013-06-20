@@ -102,9 +102,16 @@ public class WindowManager extends BeanBase {
 	    		Utility.executeMethodExpression(_data.getInitWindowEL(), new Class[]{},	new Object[]{});
 	    	}
 	
-	    	_data.setWindowHeight(wd.getWindowHeight());
-	    	_data.setWindowTitle((String)Utility.getELValue(wd.getWindowTitle()));
-	    	_data.setWindowWidth(wd.getWindowWidth());
+	    	if (_data.getWindowWidth() == 0) {
+	    		_data.setWindowWidth(wd.getWindowWidth());
+	    	}
+	    	
+	    	if (_data.getWindowHeight() == 0) {
+	    		_data.setWindowHeight(wd.getWindowHeight());
+	    	}
+	    	if (!Utility.notEmptyString(_data.getWindowTitle())) {
+	    		_data.setWindowTitle((String)Utility.getELValue(wd.getWindowTitle()));
+	    	}
 	
 	    	if (Utility.notEmptyString(wd.getWindowURL())) {
 	    		_data.setWindowURL(wd.getWindowURL());

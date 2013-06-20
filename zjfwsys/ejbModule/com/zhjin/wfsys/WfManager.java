@@ -667,12 +667,49 @@ public class WfManager extends BeanBase {
   	
     }
     
-    public void applyWf(Object obj) throws Exception {
+    public void initApplyWf() throws Exception {
+    	WindowData windowData = this.getWindowData();
+    	WFInstance instance = (WFInstance)windowData.getInData();
+    	WFInstanceActor actor = dbUtility.getEntity(
+    			"select * from wfinstanceactor where wfinstanceid = :instanceId and actorempid = :empId and endtime is null and rownum = 1", 
+    			WFInstanceActor.class, new ArgMap().add("instanceId", instance).add("empId", this.getUser().getUserId()));
+    	if (actor == null) {
+    		throw new AppException("数据已被更改,请刷新表格后重新操作!");
+    	}
+    	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, instance.getWfId());
+    	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
+    	dBase.setWfId(instance.getWfId());
+    	dBase.setNodeId(actor.getNodeId());
+    	dBase.setRequestType(WFDataBase.WF_APPLY);
+    	dBase.setWfInstanceId(instance.getWfInstanceId());
+    	dBase.setReadOnly(false);
+    	dBase.setRequireTitle(instance.getReqTitle());
+    	dBase.setUrgentLevel(instance.getUrgentLevel());
+    	dBase.setWfRemark(instance.getRemark());
+    	dBase.loadData(instance.getDataId());
+    	dBase.initWFDataComponent();
+    	if (wfd.getDataShow() > 0) {
+    		dBase.setUrl(Utility.baseURL() + "/sys/showdbpage?id=" + wfd.getDataShow() + "&v=" 
+    				+ dbUtility.getEntity(SysLargeText.class, wfd.getDataShow()).getVersion());
+    	} else {
+    		dBase.setUrl("");
+    	}
+    	dBase.setAttachFileList(dbUtility.getDataList("select * from sysuploadfile where id in " +
+    			"(select fileid from wfattachfile where wfInstanceId = :wfInstanceId)", 
+    			SysUploadFile.class, new ArgMap().add("wfInstanceId", instance.getWfInstanceId())));
     	
+    	windowData.setInData(dBase);
+    	windowData.getObjMap().put("wfid", wfd.getDefineId()); 
+    	windowData.setWindowTitle("流程审批:" + instance.getWfInstanceId() + " - " + actor.getNodeName());
+    	windowData.setWindowWidth(1050);
+    	windowData.setWindowHeight(700);
+   	
     }
     
-    public void viewWf(Object obj) throws Exception {
-    	WFInstance instance = (WFInstance)obj;
+    public void initViewWF() throws Exception {
+    	WindowData windowData = this.getWindowData();
+    	windowData.setReadOnly(true);
+    	WFInstance instance = (WFInstance)windowData.getInData();
     	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, instance.getWfId());
     	WFDataBase dBase = (WFDataBase)Class.forName(wfd.getVariableObjectName()).newInstance();
     	dBase.setWfId(instance.getWfId());
@@ -694,16 +731,12 @@ public class WfManager extends BeanBase {
     	dBase.setAttachFileList(dbUtility.getDataList("select * from sysuploadfile where id in " +
     			"(select fileid from wfattachfile where wfInstanceId = :wfInstanceId)", 
     			SysUploadFile.class, new ArgMap().add("wfInstanceId", instance.getWfInstanceId())));
-    	WindowDefine wd = new WindowDefine();
-    	wd.setWindowTitle("流程查看:" + instance.getWfInstanceId());
-    	wd.setWindowURL("/workflow/wfrequest.jsf");
-    	wd.setWindowType(WindowData.CUSTOM_WINDOW);
-    	wd.setWindowWidth(1050);
-    	wd.setWindowHeight(700);
     	
-    	windowManager.openNewWindow("viewwf", dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
-    	this.getWindowData().getObjMap().put("wfid", wfd.getDefineId());
-    	this.getWindowData().setReadOnly(true);
+    	windowData.setInData(dBase);
+    	windowData.getObjMap().put("wfid", wfd.getDefineId()); 
+    	windowData.setWindowTitle("流程查看:" + instance.getWfInstanceId());
+    	windowData.setWindowWidth(1050);
+    	windowData.setWindowHeight(700);
     }
     
     public void cancelWF(Object obj) throws Exception {

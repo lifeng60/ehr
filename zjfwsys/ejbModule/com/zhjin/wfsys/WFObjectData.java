@@ -61,15 +61,18 @@ public class WFObjectData extends WFDataBase {
 	@Override
 	public void initWFDataComponent() throws Exception {
 
-       	WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
+       	WFNodeProperty nodeProperty = null;
+       	if (Utility.notEmptyString(this.getNodeId())) {
+       		nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
        			WFNodeProperty.class,
        			new ArgMap().add("wfId", this.getWfId())
        			.add("nodeId", this.getNodeId()));
-
-       	Utility.getObjectEditManager().initObjectEditData(this.getObjectData(), this.getObjectData().getEditData(), "", "", "Title",
-       			(nodeProperty == null ? "" : nodeProperty.getReadOnlyColumns()), 
-       			(nodeProperty == null ? "" : nodeProperty.getHideColumns()));
-       	
+	       	Utility.getObjectEditManager().initObjectEditData(this.getObjectData(), this.getObjectData().getEditData(), "", "", "Title",
+	       			nodeProperty.getReadOnlyColumns(), nodeProperty.getHideColumns(), this.isReadOnly() || nodeProperty.isReadOnly());
+       	} else {
+       		Utility.getObjectEditManager().initObjectEditData(this.getObjectData(), this.getObjectData().getEditData(), "", "", "Title",
+	       			"", "", this.isReadOnly());
+       	}
        	if (nodeProperty != null && Utility.notEmptyString(nodeProperty.getApplyURL()) && !Utility.notEmptyString(this.getUrl())) {
        		this.setUrl(nodeProperty.getApplyURL());
        	}
