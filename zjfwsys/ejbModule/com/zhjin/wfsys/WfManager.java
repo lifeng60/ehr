@@ -20,12 +20,14 @@ import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
+import javax.faces.event.ValueChangeListener;
 import javax.faces.model.SelectItem;
 import javax.imageio.ImageIO;
 import javax.inject.Named;
 
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.TaskService;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmActivity;
@@ -34,6 +36,7 @@ import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.Task;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.context.RequestContext;
 import org.primefaces.event.FileUploadEvent;
@@ -268,16 +271,16 @@ public class WfManager extends BeanBase {
     		tableManager.tablefreshbuttonclick();
     	}
 
-    	instanceFinishToHistory(instance);
+    	instanceFinishToHistory(instance.getWfInstanceId());
 
     }
 
-    private void instanceFinishToHistory(WFInstance instance) throws Exception {
+    private void instanceFinishToHistory(String instanceId) throws Exception {
 
-    	dbUtility.executeUpdate("insert into wfinstancehistory select * from wfinstance where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instance.getWfInstanceId()));
-    	dbUtility.executeUpdate("insert into wfinstanceactorhistory select * from wfinstanceactor where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instance.getWfInstanceId()));
-    	dbUtility.executeUpdate("delete wfinstance where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instance.getWfInstanceId()));
-    	dbUtility.executeUpdate("delete wfinstanceactor where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instance.getWfInstanceId()));
+    	dbUtility.executeUpdate("insert into wfinstancehistory select * from wfinstance where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instanceId));
+    	dbUtility.executeUpdate("insert into wfinstanceactorhistory select * from wfinstanceactor where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instanceId));
+    	dbUtility.executeUpdate("delete wfinstance where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instanceId));
+    	dbUtility.executeUpdate("delete wfinstanceactor where wfinstanceid = :instanceId", new ArgMap().add("instanceId", instanceId));
 
     }
 
@@ -401,7 +404,7 @@ public class WfManager extends BeanBase {
 
     	for (String _nn : runtime.getActiveActivityIds(processInstance.getId())) {
 
-    		WFInstanceActor actor = dbUtility.getEntity("select * from wfinstanceactor where wfInstanceId = :wfInstanceId and nodeId = :nodeId and endtime is not null ",
+    		WFInstanceActor actor = dbUtility.getEntity("select * from wfinstanceactor where wfInstanceId = :wfInstanceId and nodeId = :nodeId and endtime is null ",
     				WFInstanceActor.class, new ArgMap().add("wfInstanceId", processInstance.getProcessInstanceId()).add("nodeId", _nn));
 
     		if (actor == null) {
@@ -426,18 +429,15 @@ public class WfManager extends BeanBase {
     			}
     			if (actorEmpId > 0) {
     				actorUser = dbUtility.getEntity("select * from euserview where id = :id", EUser.class, new ArgMap().add("id", actorEmpId));
-    				if (actorUser == null) {
-    					throw new Exception("流程节点(" + nodeProperty.getNodeName() + ")未指定审批人");
+    				if (actorUser != null) {
+    	    			actor.setActorEmpId(actorUser.getId());
+    	    			actor.setActorLoginName(actorUser.getLoginName());
+    	    			actor.setActorName(actorUser.getName());
+    	    			actor.setBeginTime(new Date());
+    	    			actor.setPreEmpId(preEmpId);
+    	    			actor.setPreNodeId(preNodeId);
     				}
-    			} else {
-    				throw new Exception("流程节点(" + nodeProperty.getNodeName() + ")未指定审批人");
     			}
-    			actor.setActorEmpId(actorUser.getId());
-    			actor.setActorLoginName(actorUser.getLoginName());
-    			actor.setActorName(actorUser.getName());
-    			actor.setBeginTime(new Date());
-    			actor.setPreEmpId(preEmpId);
-    			actor.setPreNodeId(preNodeId);
     			
     			dbUtility.save(actor);
 
@@ -688,6 +688,9 @@ public class WfManager extends BeanBase {
     	dBase.setWfRemark(instance.getRemark());
     	dBase.loadData(instance.getDataId());
     	dBase.initWFDataComponent();
+    	dBase.setRollbackNodeList(sysUtil.getSelectItemList(
+    			"select nodeid, '流程节点: '||nodename from wfinstanceactor where endtime is not null and wfinstanceid = :instanceId ", 
+    			new ArgMap().add("instanceId", instance.getWfInstanceId())));
     	if (wfd.getDataShow() > 0) {
     		dBase.setUrl(Utility.baseURL() + "/sys/showdbpage?id=" + wfd.getDataShow() + "&v=" 
     				+ dbUtility.getEntity(SysLargeText.class, wfd.getDataShow()).getVersion());
@@ -859,6 +862,50 @@ public class WfManager extends BeanBase {
     public void downloadAttachFile(ActionEvent event) throws Exception {
     	long fileId = (Long)(event.getComponent().getAttributes().get("fileId"));
     	sysUtil.downloadFile(fileId, "DOWNLOAD");
+    }
+    
+    @Audit
+    public void applyWorkflow(ActionEvent event) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	if (!Utility.notEmptyString(db.getApplyResult())) {
+    		throw new AppException("请选择审核结果!");
+    	}
+    	db.validData();
+    	db.saveData();
+    	WFInstanceActor actor = dbUtility.getEntity(
+    			"select * from wfinstanceactor where wfinstanceid = :instanceId and nodeid = :nodeId and endtime is null", 
+    			WFInstanceActor.class, new ArgMap().add("instanceId", db.getWfInstanceId()).add("nodeId", db.getNodeId()));
+    	actor.setRealActorEmpId(this.getUser().getUserId());
+    	actor.setRealActorLoginName(this.getUser().getLoginName());
+    	actor.setRealActorName(this.getUser().getName());
+    	actor.setApplyResult(db.getApplyResult());
+    	actor.setApplyRemark(db.getApplyRemark());
+    	actor.setEndTime(new Date());
+
+    	TaskService taskService = WFUtil.processEngine.getTaskService();
+    	
+    	List<Task> taskList = taskService.createTaskQuery().processInstanceId(db.getWfInstanceId()).list();
+    	for (Task t : taskList) {
+    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {
+    			taskService.complete(t.getId());
+    			ProcessInstance processInstance = WFUtil.processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(db.getWfInstanceId()).singleResult();
+    			if (processInstance.isEnded()) {
+    				System.out.println("end.");
+    				db.dataProcess();
+    				this.instanceFinishToHistory(db.getWfInstanceId());
+    			} else {
+    				this.initActivityNode(processInstance, this.getUser().getUserId(), t.getTaskDefinitionKey());
+    			}
+    			break;
+    		}
+    	}
+    	this.getWindowData().closeWindow();
+    }
+    
+    
+    public void applyResultChange(ValueChangeEvent event) throws Exception {
+    	event.getComponent().processUpdates(FacesContext.getCurrentInstance());
+    	Utility.updateComponent(Utility.getComponentId("rollbacknodeid"));
     }
 
 }

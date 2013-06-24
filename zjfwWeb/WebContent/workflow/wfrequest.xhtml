@@ -93,23 +93,29 @@
 					</h:panelGrid>
 				</div>
 			</p:overlayPanel>
-			<p:overlayPanel for="wfapply" hideEffect="fade" dynamic="true">
-				<zh:div rendered="#{windowData.inData.requestType == 'APPLY'}" style="padding:10px;">
+			<p:overlayPanel for="wfapply" hideEffect="fade" dynamic="false">
+				<zh:div style="padding:10px;">
 					<h:panelGrid columns="1">
 						<zh:div>
 							<h:outputText value="审批结果: " style="color:#2e6e9e;font-weight:bold;padding-left:0px;" />
-							<p:selectOneButton>
-								<f:selectItem itemLabel="同意" itemValue="1" />
-								<f:selectItem itemLabel="拒绝" itemValue="2" />
-								<f:selectItem itemLabel="已阅" itemValue="3" />
-								<f:selectItem itemLabel="回退" itemValue="4" />
+							<p:selectOneButton value="#{windowData.inData.applyResult}" valueChangeListener="#{wfManager.applyResultChange}">
+								<f:selectItem itemLabel="同意" itemValue="AGREE" />
+								<f:selectItem itemLabel="拒绝" itemValue="DENY" />
+								<f:selectItem itemLabel="已阅" itemValue="READ" />
+								<f:selectItem itemLabel="回退" itemValue="ROLLBACK" />
+								<p:ajax envet="change"></p:ajax>
 							</p:selectOneButton>
+							<h:selectOneMenu id="rollbacknodeid" value="#{windowData.inData.rollbackNodeId}"
+								rendered="#{windowData.inData.applyResult == 'ROLLBACK'}">>
+								<f:selectItems value="#{windowData.inData.rollbackNodeList}"></f:selectItems>
+							</h:selectOneMenu>
 						</zh:div>
 						<h:outputText value="审批意见:" style="color:#2e6e9e;font-weight:bold;" />
-						<p:editor width="600" height="200"
+						<p:editor value="#{windowData.inData.applyRemark}" width="600" height="200"
 							controls="bold italic underline strikethrough font size style color highlight bullets numbering alignleft center alignright justify outdent indent">
 						</p:editor>
-						<p:commandButton value="提交" icon="ui-icon-check">
+						<p:commandButton value="提交" icon="ui-icon-check"
+							actionListener="#{wfManager.applyWorkflow}">
 						</p:commandButton>
 					</h:panelGrid>
 				</zh:div>

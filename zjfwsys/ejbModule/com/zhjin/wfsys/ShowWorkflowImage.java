@@ -53,14 +53,13 @@ public class ShowWorkflowImage extends HttpServlet {
 	    			g2d.setColor(Color.RED);
 	    			g2d.setStroke(new BasicStroke(2.0f));
 	    			
-	    			//List<String> activeActivityIds = WFUtil.processEngine.getRuntimeService().getActiveActivityIds(processInstance.getId());
 	    			DiagramLayout processDiagramLayout = WFUtil.processEngine.getRepositoryService().getProcessDiagramLayout(processInstance.getProcessDefinitionId());
 	    			List<DiagramNode> nodes = processDiagramLayout.getNodes();
 	    			List<WFInstanceActor> actorList = Utility.getDBUtility().getDataList(
-	    					"select * from wfinstanceactor where wfinstanceid = :instanceId", 
+	    					"select * from wfinstanceactor where wfinstanceid = :instanceId union all select * from wfinstanceactorhistory where wfinstanceid = :instanceId", 
 	    					WFInstanceActor.class, new ArgMap().add("instanceId", instanceId));
-	    			for (DiagramNode _n : nodes) {
-	    				WFInstanceActor actor = getActor(actorList, _n.getId());
+	    			for (WFInstanceActor actor : actorList) {
+	    				DiagramNode _n = getDiagramNode(nodes, actor.getNodeId());
 	    				if (actor != null) {
 	    					g2d.setColor(Color.black);
 	    					if (Utility.notEmptyString(actor.getActorLoginName())) {
@@ -71,7 +70,7 @@ public class ShowWorkflowImage extends HttpServlet {
 	    					} else {
 	    						g2d.setColor(Color.red);
 	    					}
-	    					g2d.drawRoundRect(_n.getX().intValue(), _n.getY().intValue(), _n.getWidth().intValue(), _n.getHeight().intValue(), 20, 20);
+	    					g2d.drawRoundRect(_n.getX().intValue() , _n.getY().intValue(), _n.getWidth().intValue(), _n.getHeight().intValue(), 20, 20);
 	    				}
 	    			}
 	    		}
@@ -89,9 +88,9 @@ public class ShowWorkflowImage extends HttpServlet {
 		}
 	}
 	
-	private WFInstanceActor getActor(List<WFInstanceActor> list, String nodeId) {
-		for (WFInstanceActor a : list) {
-			if (a.getNodeId().equals(nodeId)) {
+	private DiagramNode getDiagramNode(List<DiagramNode> list, String nodeId) {
+		for (DiagramNode a : list) {
+			if (a.getId().equals(nodeId)) {
 				return a;
 			}
 		}

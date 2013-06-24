@@ -6,6 +6,8 @@ package com.zhjin.wfsys;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.faces.model.SelectItem;
+
 import com.zhjin.base.entity.SysUploadFile;
 
 /**
@@ -47,6 +49,13 @@ public abstract class WFDataBase {
 	private String requireTitle;
 	
 	private String wfRemark;
+	private String applyRemark;
+	
+	private String rollbackNodeId;
+	
+	private List<SelectItem> rollbackNodeList;
+	
+	private String applyResult;
 
 	public String nextTransaction(String nodeName) {return null;}
 
@@ -184,6 +193,38 @@ public abstract class WFDataBase {
 
 	public void setWfRemark(String wfRemark) {
 		this.wfRemark = wfRemark;
+	}
+
+	public String getRollbackNodeId() {
+		return rollbackNodeId;
+	}
+
+	public void setRollbackNodeId(String rollbackNodeId) {
+		this.rollbackNodeId = rollbackNodeId;
+	}
+
+	public List<SelectItem> getRollbackNodeList() {
+		return rollbackNodeList;
+	}
+
+	public void setRollbackNodeList(List<SelectItem> rollbackNodeList) {
+		this.rollbackNodeList = rollbackNodeList;
+	}
+
+	public String getApplyResult() {
+		return applyResult;
+	}
+
+	public void setApplyResult(String applyResult) {
+		this.applyResult = applyResult;
+	}
+
+	public String getApplyRemark() {
+		return applyRemark;
+	}
+
+	public void setApplyRemark(String applyRemark) {
+		this.applyRemark = applyRemark;
 	}
 
 }
