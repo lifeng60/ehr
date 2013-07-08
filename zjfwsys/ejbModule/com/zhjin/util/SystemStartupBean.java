@@ -11,10 +11,6 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 
-import org.activiti.engine.ProcessEngines;
-
-import com.zhjin.wfsys.WFUtil;
-
 /**
  * Session Bean implementation class SystemStartupBean
  */
@@ -35,8 +31,6 @@ public class SystemStartupBean extends BeanBase {
     
     @PostConstruct
     public void initArg() throws Exception {
-    	
-    	WFUtil.processEngine = ProcessEngines.getDefaultProcessEngine();
     	
     	List<SystemParameter> _list = dbUtility.getDataList("select * from systemparameter", SystemParameter.class, null);
     	

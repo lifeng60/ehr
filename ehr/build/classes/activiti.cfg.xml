@@ -10,13 +10,18 @@
       <property name="resourceRef" value="true" />
    </bean>
    
-  <bean id="processEngineConfiguration" class="org.activiti.engine.impl.cfg.JtaProcessEngineConfiguration">  
+  <bean id="processEngineConfiguration" class="org.activiti.cdi.CdiJtaProcessEngineConfiguration">  
     <property name="dataSourceJndiName" value="java:/emdbDS" />
     <property name="transactionManager" ref="transactionManager" />
     <property name="transactionsExternallyManaged" value="true" />
     <property name="databaseSchemaUpdate" value="true" />
     <property name="databaseType" value="oracle" />
     <property name="jobExecutorActivate" value="false" />  
+    <property name="postBpmnParseHandlers">
+    	<list>
+    		<bean class="com.zhjin.wfsys.ZhjinUserTaskParseHandler"></bean>
+    	</list>
+    </property>
   </bean>
 
 </beans>

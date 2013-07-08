@@ -20,14 +20,12 @@ import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
-import javax.faces.event.ValueChangeListener;
 import javax.faces.model.SelectItem;
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmActivity;
@@ -69,6 +67,9 @@ public class WfManager extends BeanBase {
 
 	public static String WFDIALOG_DATA_STRING = "WFObjectData";
 	public static String WFDIALOG_CONTROLDATA_STRING = "WFControlData";
+	
+	@Inject
+	private ProcessEngine processEngine;
 	
 	@EJB
 	private TableManager tableManager;
@@ -152,16 +153,13 @@ public class WfManager extends BeanBase {
     }
     
     public void deployWorkflow(FileUploadData fData, UploadedFile uFile) throws Exception {
-
-    	RepositoryService rs = WFUtil.processEngine.getRepositoryService();
-
-    	Deployment deploy = rs.createDeployment().addZipInputStream(new ZipInputStream(uFile.getInputstream())).deploy();
-
+    	Deployment deploy = processEngine.getRepositoryService().createDeployment().addZipInputStream(new ZipInputStream(uFile.getInputstream())).deploy();
+    	
     	WorkflowDefine wfd = (WorkflowDefine)fData.getParentData();
 
-    	ProcessDefinition pdf = rs.createProcessDefinitionQuery().deploymentId(deploy.getId()).singleResult();
+    	ProcessDefinition pdf = processEngine.getRepositoryService().createProcessDefinitionQuery().deploymentId(deploy.getId()).singleResult();
 
-    	InputStream imageInputStream = rs.getResourceAsStream(pdf.getDeploymentId(), pdf.getDiagramResourceName());
+    	InputStream imageInputStream = processEngine.getRepositoryService().getResourceAsStream(pdf.getDeploymentId(), pdf.getDiagramResourceName());
     	BufferedImage image = ImageIO.read(imageInputStream);
     	wfd.setImageWidth(image.getWidth());
     	wfd.setImageHeight(image.getHeight());
@@ -174,9 +172,8 @@ public class WfManager extends BeanBase {
 
     	// 初始化流程节点
 		try {
-
-			ReadOnlyProcessDefinition procDef = ((RepositoryServiceImpl)rs).getDeployedProcessDefinition(pdf.getId());
-
+			ReadOnlyProcessDefinition procDef = ((RepositoryServiceImpl)processEngine.getRepositoryService()).getDeployedProcessDefinition(pdf.getId());	
+			
 			HashMap<String, Object> arg = new HashMap<String, Object>();
 			StringBuffer _str = new StringBuffer();
 			_str.append("(' '");
@@ -184,6 +181,7 @@ public class WfManager extends BeanBase {
 			int _nodeIndexNo = 0;
 
 			for (PvmActivity act : procDef.getActivities()) {
+				
 				arg.clear();
 				arg.put("wfId", wfd.getId());
 				String _nodeName = (String)((ActivityImpl)act).getProperty("name");
@@ -240,11 +238,11 @@ public class WfManager extends BeanBase {
     public void cancelWFInstance(Object obj) throws Exception {
 
     	WFInstance instance = (WFInstance)obj;
-    	ProcessInstance processInstance = WFUtil.processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(instance.getWfInstanceId()).singleResult();
+    	ProcessInstance processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(instance.getWfInstanceId()).singleResult();
 
     	if (processInstance != null && !processInstance.isEnded()) {
 
-    		WFUtil.processEngine.getRuntimeService().deleteProcessInstance(instance.getWfInstanceId(), "管理员终止!");
+    		processEngine.getRuntimeService().deleteProcessInstance(instance.getWfInstanceId(), "管理员终止!");
 
     	}
 
@@ -291,17 +289,17 @@ public class WfManager extends BeanBase {
     	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, wfInstance.getWfId());
     	windowData.getObjMap().put("workflowdefid", wfInstance.getWfDefineId());
 
-    	ProcessInstance processInstance = WFUtil.processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(wfInstance.getWfInstanceId()).singleResult();
+    	ProcessInstance processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(wfInstance.getWfInstanceId()).singleResult();
 
     	// 流程图
     	if (processInstance != null && !processInstance.isEnded()) {
 
-    		ProcessDefinitionEntity def = (ProcessDefinitionEntity)((RepositoryServiceImpl)WFUtil.processEngine.getRepositoryService()).getDeployedProcessDefinition(wfd.getDefineId());
+    		ProcessDefinitionEntity def = (ProcessDefinitionEntity)((RepositoryServiceImpl)processEngine.getRepositoryService()).getDeployedProcessDefinition(wfd.getDefineId());
 
 
 
 	    	TreeSet<String> _actNodeSet = new TreeSet<String>();
-	    	for (String _nn : WFUtil.processEngine.getRuntimeService().getActiveActivityIds(wfInstance.getWfInstanceId())) {
+	    	for (String _nn : processEngine.getRuntimeService().getActiveActivityIds(wfInstance.getWfInstanceId())) {
 	    		_actNodeSet.add(_nn);
 	    	}
 
@@ -338,10 +336,8 @@ public class WfManager extends BeanBase {
 
     	WorkflowDefine wfd = dbUtility.getEntity(WorkflowDefine.class, wfData.getWfId());
 
-    	RuntimeService runtime = WFUtil.processEngine.getRuntimeService();
-
-    	ProcessInstance processInstance = runtime.startProcessInstanceByKey(wfd.getWfKey());
-
+    	ProcessInstance processInstance = processEngine.getRuntimeService().startProcessInstanceByKey(wfd.getWfKey());
+    	
     	WFInstance instance = new WFInstance();
     	instance.setBeginTime(new Date());
     	instance.setEnabled(true);
@@ -396,13 +392,11 @@ public class WfManager extends BeanBase {
 
     private void initActivityNode(ProcessInstance processInstance, long preEmpId, String preNodeId) throws Exception {
 
-    	RuntimeService runtime = WFUtil.processEngine.getRuntimeService();
-
-    	ProcessDefinition processDefine = WFUtil.processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(processInstance.getProcessDefinitionId()).singleResult();
+    	ProcessDefinition processDefine = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(processInstance.getProcessDefinitionId()).singleResult();
 
     	WorkflowDefine wfd = dbUtility.getEntity("select * from workflowdefine where wfkey = :wfKey", WorkflowDefine.class, new ArgMap().add("wfKey", processDefine.getKey()));
 
-    	for (String _nn : runtime.getActiveActivityIds(processInstance.getId())) {
+    	for (String _nn : processEngine.getRuntimeService().getActiveActivityIds(processInstance.getId())) {
 
     		WFInstanceActor actor = dbUtility.getEntity("select * from wfinstanceactor where wfInstanceId = :wfInstanceId and nodeId = :nodeId and endtime is null ",
     				WFInstanceActor.class, new ArgMap().add("wfInstanceId", processInstance.getProcessInstanceId()).add("nodeId", _nn));
@@ -663,7 +657,7 @@ public class WfManager extends BeanBase {
     	windowManager.openNewWindow("wf" + wfId, dBase, wd, null, true, "table:refreshtable", ConvManager.CONV_TIMEOUT, false);
     	this.getWindowData().getObjMap().put("wfid", wfd.getDefineId());
     	
-    	Utility.executeJavaScript("wfSelectPanel.hide();");
+    	//Utility.executeJavaScript("wfSelectPanel.hide();");
   	
     }
     
@@ -875,32 +869,46 @@ public class WfManager extends BeanBase {
     	WFInstanceActor actor = dbUtility.getEntity(
     			"select * from wfinstanceactor where wfinstanceid = :instanceId and nodeid = :nodeId and endtime is null", 
     			WFInstanceActor.class, new ArgMap().add("instanceId", db.getWfInstanceId()).add("nodeId", db.getNodeId()));
+    	if (actor == null) {
+    		throw new Exception("节点已审批或不存在,请联系系统管理员!");
+    	}
     	actor.setRealActorEmpId(this.getUser().getUserId());
     	actor.setRealActorLoginName(this.getUser().getLoginName());
     	actor.setRealActorName(this.getUser().getName());
     	actor.setApplyResult(db.getApplyResult());
     	actor.setApplyRemark(db.getApplyRemark());
     	actor.setEndTime(new Date());
-
-    	TaskService taskService = WFUtil.processEngine.getTaskService();
     	
-    	List<Task> taskList = taskService.createTaskQuery().processInstanceId(db.getWfInstanceId()).list();
+    	List<Task> taskList = processEngine.getTaskService().createTaskQuery().processInstanceId(db.getWfInstanceId()).list();
     	for (Task t : taskList) {
-    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {
-    			taskService.complete(t.getId());
-    			ProcessInstance processInstance = WFUtil.processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(db.getWfInstanceId()).singleResult();
-    			if (processInstance.isEnded()) {
+    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {  
+    			
+    			ProcessInstance processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(db.getWfInstanceId()).singleResult();
+    			processEngine.getTaskService().complete(t.getId());
+    			
+    			processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(db.getWfInstanceId()).singleResult();
+    			if (processInstance == null || processInstance.isEnded()) {
     				System.out.println("end.");
     				db.dataProcess();
+    				WFInstance instance = dbUtility.getEntity(
+    						"select * from wfinstance where wfinstanceid = :instanceId", 
+    						WFInstance.class, new ArgMap().add("instanceId", db.getWfInstanceId()));
+    				instance.setFinish(true);
+    				instance.setEndStatus("结束");
+    				instance.setEndTime(new Date());
+    				dbUtility.update(instance, true);
     				this.instanceFinishToHistory(db.getWfInstanceId());
+    				
     			} else {
     				this.initActivityNode(processInstance, this.getUser().getUserId(), t.getTaskDefinitionKey());
     			}
     			break;
     		}
     	}
-    	this.getWindowData().closeWindow();
+    	this.getWindowData().closeWindow();   	
     }
+    
+    
     
     
     public void applyResultChange(ValueChangeEvent event) throws Exception {
