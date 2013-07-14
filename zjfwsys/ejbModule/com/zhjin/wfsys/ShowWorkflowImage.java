@@ -12,14 +12,12 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.repository.DiagramLayout;
 import org.activiti.engine.repository.DiagramNode;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -30,8 +28,6 @@ import com.zhjin.util.Utility;
 
 @WebServlet(urlPatterns="/workflow/showworkflowimage")
 public class ShowWorkflowImage extends HttpServlet {
-	@Inject
-	private ProcessEngine processEngine;
 	
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -44,20 +40,20 @@ public class ShowWorkflowImage extends HttpServlet {
 			response.setHeader("Cache-Control","no-cache");
 			response.setHeader("Expires","0");
 			
-	    	ProcessDefinition pdf = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId((String)request.getParameter("wfid")).singleResult();
-	    	iStream = processEngine.getRepositoryService().getResourceAsStream(pdf.getDeploymentId(), pdf.getDiagramResourceName());
+	    	ProcessDefinition pdf = WfManager.processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId((String)request.getParameter("wfid")).singleResult();
+	    	iStream = WfManager.processEngine.getRepositoryService().getResourceAsStream(pdf.getDeploymentId(), pdf.getDiagramResourceName());
 
 	    	BufferedImage image = ImageIO.read(iStream);	    	
 
 	    	String instanceId = (String)request.getParameter("instanceId");
 	    	if (Utility.notEmptyString(instanceId)) {
-	    		ProcessInstance processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(instanceId).singleResult();
+	    		ProcessInstance processInstance = WfManager.processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(instanceId).singleResult();
 	    		if (processInstance != null) {
 	    			Graphics2D g2d = image.createGraphics();
 	    			g2d.setColor(Color.RED);
 	    			g2d.setStroke(new BasicStroke(2.0f));
 	    			
-	    			DiagramLayout processDiagramLayout = processEngine.getRepositoryService().getProcessDiagramLayout(processInstance.getProcessDefinitionId());
+	    			DiagramLayout processDiagramLayout = WfManager.processEngine.getRepositoryService().getProcessDiagramLayout(processInstance.getProcessDefinitionId());
 	    			List<DiagramNode> nodes = processDiagramLayout.getNodes();
 	    			List<WFInstanceActor> actorList = Utility.getDBUtility().getDataList(
 	    					"select * from wfinstanceactor where wfinstanceid = :instanceId union all select * from wfinstanceactorhistory where wfinstanceid = :instanceId", 

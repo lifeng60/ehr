@@ -65,7 +65,7 @@ public class TestBean extends BeanBase {
 //    	ui.getChildren().clear();
 //    	ft.apply(facesContext, ui);
     	System.out.println("open dialog ...");
-    	RequestContext.getCurrentInstance().openDialog("/test/test1", new ArgMap().add("modal", true).add("contentHeight", 300).add("resizable", false), null);
+    	RequestContext.getCurrentInstance().openDialog("/test/test1");
     }
 
     @Audit

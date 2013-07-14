@@ -20,7 +20,7 @@ public class AuditInterceptor {
 	@EJB private SysUtil sysUtil;
 	
 	@AroundInvoke
-	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	public Object auditProcess(InvocationContext context) throws Exception {
 		
 		try {			

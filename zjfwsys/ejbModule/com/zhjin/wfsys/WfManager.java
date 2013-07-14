@@ -25,7 +25,9 @@ import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ProcessEngine;
+import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmActivity;
@@ -68,8 +70,7 @@ public class WfManager extends BeanBase {
 	public static String WFDIALOG_DATA_STRING = "WFObjectData";
 	public static String WFDIALOG_CONTROLDATA_STRING = "WFControlData";
 	
-	@Inject
-	private ProcessEngine processEngine;
+	public static ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
 	
 	@EJB
 	private TableManager tableManager;
@@ -384,62 +385,61 @@ public class WfManager extends BeanBase {
     		_f.setFileId(fileid);
     		dbUtility.save(_f);
     	}
-    	initActivityNode(processInstance, empId, wfData.getNodeId());
 
     	dbUtility.save(instance);
 
     }
 
-    private void initActivityNode(ProcessInstance processInstance, long preEmpId, String preNodeId) throws Exception {
-
-    	ProcessDefinition processDefine = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(processInstance.getProcessDefinitionId()).singleResult();
-
-    	WorkflowDefine wfd = dbUtility.getEntity("select * from workflowdefine where wfkey = :wfKey", WorkflowDefine.class, new ArgMap().add("wfKey", processDefine.getKey()));
-
-    	for (String _nn : processEngine.getRuntimeService().getActiveActivityIds(processInstance.getId())) {
-
-    		WFInstanceActor actor = dbUtility.getEntity("select * from wfinstanceactor where wfInstanceId = :wfInstanceId and nodeId = :nodeId and endtime is null ",
-    				WFInstanceActor.class, new ArgMap().add("wfInstanceId", processInstance.getProcessInstanceId()).add("nodeId", _nn));
-
-    		if (actor == null) {
-    			long actorEmpId = 0;
-    			EUser actorUser = null;
-    			WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
-    	       			WFNodeProperty.class,
-    	       			new ArgMap().add("wfId", wfd.getId())
-    	       			.add("nodeId", _nn));
-    			if (nodeProperty == null) {
-    				throw new AppException("流程节点未定义!");
-    			}
-    			actor = new WFInstanceActor();
-    			actor.setWfInstanceId(processInstance.getProcessInstanceId());
-    			actor.setNodeId(_nn);
-    			actor.setNodeName(dbUtility.getEntity("select * from wfnodeproperty where wfId = :wfId and nodeId = :nodeId",
-    					WFNodeProperty.class, new ArgMap().add("wfId", wfd.getId()).add("nodeId", _nn)).getNodeName());
-    			if (Utility.notEmptyString(nodeProperty.getActorEL())) {
-    				actorEmpId = (Long)(Utility.getELValue(nodeProperty.getActorEL()));
-    			} else if (Utility.notEmptyString(nodeProperty.getActorQueryString())) {
-    				actorEmpId = ((BigDecimal)dbUtility.getData((String)Utility.getELValue(nodeProperty.getActorQueryString()), null)).longValue();
-    			}
-    			if (actorEmpId > 0) {
-    				actorUser = dbUtility.getEntity("select * from euserview where id = :id", EUser.class, new ArgMap().add("id", actorEmpId));
-    				if (actorUser != null) {
-    	    			actor.setActorEmpId(actorUser.getId());
-    	    			actor.setActorLoginName(actorUser.getLoginName());
-    	    			actor.setActorName(actorUser.getName());
-    	    			actor.setBeginTime(new Date());
-    	    			actor.setPreEmpId(preEmpId);
-    	    			actor.setPreNodeId(preNodeId);
-    				}
-    			}
-    			
-    			dbUtility.save(actor);
-
-    		}
-
-    	}
-
-    }
+//    private void initActivityNode(ProcessInstance processInstance, long preEmpId, String preNodeId) throws Exception {
+//
+//    	ProcessDefinition processDefine = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(processInstance.getProcessDefinitionId()).singleResult();
+//
+//    	WorkflowDefine wfd = dbUtility.getEntity("select * from workflowdefine where wfkey = :wfKey", WorkflowDefine.class, new ArgMap().add("wfKey", processDefine.getKey()));
+//
+//    	for (String _nn : processEngine.getRuntimeService().getActiveActivityIds(processInstance.getId())) {
+//
+//    		WFInstanceActor actor = dbUtility.getEntity("select * from wfinstanceactor where wfInstanceId = :wfInstanceId and nodeId = :nodeId and endtime is null ",
+//    				WFInstanceActor.class, new ArgMap().add("wfInstanceId", processInstance.getProcessInstanceId()).add("nodeId", _nn));
+//
+//    		if (actor == null) {
+//    			long actorEmpId = 0;
+//    			EUser actorUser = null;
+//    			WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
+//    	       			WFNodeProperty.class,
+//    	       			new ArgMap().add("wfId", wfd.getId())
+//    	       			.add("nodeId", _nn));
+//    			if (nodeProperty == null) {
+//    				throw new AppException("流程节点未定义!");
+//    			}
+//    			actor = new WFInstanceActor();
+//    			actor.setWfInstanceId(processInstance.getProcessInstanceId());
+//    			actor.setNodeId(_nn);
+//    			actor.setNodeName(dbUtility.getEntity("select * from wfnodeproperty where wfId = :wfId and nodeId = :nodeId",
+//    					WFNodeProperty.class, new ArgMap().add("wfId", wfd.getId()).add("nodeId", _nn)).getNodeName());
+//    			if (Utility.notEmptyString(nodeProperty.getActorEL())) {
+//    				actorEmpId = (Long)(Utility.getELValue(nodeProperty.getActorEL()));
+//    			} else if (Utility.notEmptyString(nodeProperty.getActorQueryString())) {
+//    				actorEmpId = ((BigDecimal)dbUtility.getData((String)Utility.getELValue(nodeProperty.getActorQueryString()), null)).longValue();
+//    			}
+//    			if (actorEmpId > 0) {
+//    				actorUser = dbUtility.getEntity("select * from euserview where id = :id", EUser.class, new ArgMap().add("id", actorEmpId));
+//    				if (actorUser != null) {
+//    	    			actor.setActorEmpId(actorUser.getId());
+//    	    			actor.setActorLoginName(actorUser.getLoginName());
+//    	    			actor.setActorName(actorUser.getName());
+//    	    			actor.setBeginTime(new Date());
+//    	    			actor.setPreEmpId(preEmpId);
+//    	    			actor.setPreNodeId(preNodeId);
+//    				}
+//    			}
+//    			
+//    			dbUtility.save(actor);
+//
+//    		}
+//
+//    	}
+//
+//    }
 
     public void testWrokFlow(Object obj) throws Exception {
     }
@@ -866,6 +866,20 @@ public class WfManager extends BeanBase {
     	}
     	db.validData();
     	db.saveData();
+    	
+    	List<Task> taskList = processEngine.getTaskService().createTaskQuery().processInstanceId(db.getWfInstanceId()).list();
+    	for (Task t : taskList) {
+    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {      			
+    			processEngine.getTaskService().complete(t.getId());    			
+    			break;
+    		}
+    	}
+    	
+    	this.getWindowData().closeWindow(); 
+    }
+    
+    public void userTaskCompleteProcess(String processDefinitionId, String processInstanceId, String taskDefinitionKey) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
     	WFInstanceActor actor = dbUtility.getEntity(
     			"select * from wfinstanceactor where wfinstanceid = :instanceId and nodeid = :nodeId and endtime is null", 
     			WFInstanceActor.class, new ArgMap().add("instanceId", db.getWfInstanceId()).add("nodeId", db.getNodeId()));
@@ -878,38 +892,64 @@ public class WfManager extends BeanBase {
     	actor.setApplyResult(db.getApplyResult());
     	actor.setApplyRemark(db.getApplyRemark());
     	actor.setEndTime(new Date());
-    	
-    	List<Task> taskList = processEngine.getTaskService().createTaskQuery().processInstanceId(db.getWfInstanceId()).list();
-    	for (Task t : taskList) {
-    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {  
-    			
-    			ProcessInstance processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(db.getWfInstanceId()).singleResult();
-    			processEngine.getTaskService().complete(t.getId());
-    			
-    			processInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(db.getWfInstanceId()).singleResult();
-    			if (processInstance == null || processInstance.isEnded()) {
-    				System.out.println("end.");
-    				db.dataProcess();
-    				WFInstance instance = dbUtility.getEntity(
-    						"select * from wfinstance where wfinstanceid = :instanceId", 
-    						WFInstance.class, new ArgMap().add("instanceId", db.getWfInstanceId()));
-    				instance.setFinish(true);
-    				instance.setEndStatus("结束");
-    				instance.setEndTime(new Date());
-    				dbUtility.update(instance, true);
-    				this.instanceFinishToHistory(db.getWfInstanceId());
-    				
-    			} else {
-    				this.initActivityNode(processInstance, this.getUser().getUserId(), t.getTaskDefinitionKey());
-    			}
-    			break;
-    		}
-    	}
-    	this.getWindowData().closeWindow();   	
+    	dbUtility.update(actor, true);
     }
     
+    public void processInstanceEndProcess(String processDefinitionId, String processInstanceId) throws Exception {
+    	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+		db.dataProcess();
+		WFInstance instance = dbUtility.getEntity(
+				"select * from wfinstance where wfinstanceid = :instanceId", 
+				WFInstance.class, new ArgMap().add("instanceId", db.getWfInstanceId()));
+		instance.setFinish(true);
+		instance.setEndStatus("结束");
+		instance.setEndTime(new Date());
+		dbUtility.update(instance, true);
+		this.instanceFinishToHistory(db.getWfInstanceId());
+    }
     
-    
+    public void userTaskCreate(String processDefinitionId, String processInstanceId, String taskDefinitionKey) throws Exception {
+
+    	ProcessDefinition processDefine = processEngine.getRepositoryService().createProcessDefinitionQuery().processDefinitionId(processDefinitionId).singleResult();
+    	
+    	WorkflowDefine wfd = dbUtility.getEntity("select * from workflowdefine where wfkey = :wfKey", WorkflowDefine.class, new ArgMap().add("wfKey", processDefine.getKey()));
+
+   		WFInstanceActor actor = dbUtility.getEntity("select * from wfinstanceactor where wfInstanceId = :wfInstanceId and nodeId = :nodeId and endtime is null ",
+   				WFInstanceActor.class, new ArgMap().add("wfInstanceId", processInstanceId).add("nodeId", taskDefinitionKey));
+   		if (actor == null) {
+			long actorEmpId = 0;
+			EUser actorUser = null;
+			WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
+	       			WFNodeProperty.class,
+	       			new ArgMap().add("wfId", wfd.getId())
+	       			.add("nodeId", taskDefinitionKey));
+			if (nodeProperty == null) {
+				throw new AppException("流程节点未定义!");
+			}
+			actor = new WFInstanceActor();
+			actor.setWfInstanceId(processInstanceId);
+			actor.setNodeId(taskDefinitionKey);
+			actor.setNodeName(dbUtility.getEntity("select * from wfnodeproperty where wfId = :wfId and nodeId = :nodeId",
+					WFNodeProperty.class, new ArgMap().add("wfId", wfd.getId()).add("nodeId", taskDefinitionKey)).getNodeName());
+			if (Utility.notEmptyString(nodeProperty.getActorEL())) {
+				actorEmpId = (Long)(Utility.getELValue(nodeProperty.getActorEL()));
+			} else if (Utility.notEmptyString(nodeProperty.getActorQueryString())) {
+				actorEmpId = ((BigDecimal)dbUtility.getData((String)Utility.getELValue(nodeProperty.getActorQueryString()), null)).longValue();
+			}
+			if (actorEmpId > 0) {
+				actorUser = dbUtility.getEntity("select * from euserview where id = :id", EUser.class, new ArgMap().add("id", actorEmpId));
+				if (actorUser != null) {
+	    			actor.setActorEmpId(actorUser.getId());
+	    			actor.setActorLoginName(actorUser.getLoginName());
+	    			actor.setActorName(actorUser.getName());
+	    			actor.setBeginTime(new Date());
+				}
+			}
+			
+			dbUtility.save(actor);
+			
+	  	}
+    }    
     
     public void applyResultChange(ValueChangeEvent event) throws Exception {
     	event.getComponent().processUpdates(FacesContext.getCurrentInstance());

@@ -11,6 +11,10 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 
+import org.activiti.engine.ProcessEngines;
+
+import com.zhjin.wfsys.WfManager;
+
 /**
  * Session Bean implementation class SystemStartupBean
  */
@@ -37,8 +41,7 @@ public class SystemStartupBean extends BeanBase {
     	for (SystemParameter para : _list) {
     		appPara.getSysPara().put(para.getParaName(), para.getParaValue());
     	}
-
-    	
+    	    	
     }
     
 }

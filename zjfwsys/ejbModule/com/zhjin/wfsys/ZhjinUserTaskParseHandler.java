@@ -26,7 +26,9 @@ public class ZhjinUserTaskParseHandler extends AbstractBpmnParseHandler<UserTask
 		if (activity.getActivityBehavior() instanceof UserTaskActivityBehavior ) {
 			((UserTaskActivityBehavior)activity.getActivityBehavior()).getTaskDefinition().addTaskListener(
 					TaskListener.EVENTNAME_COMPLETE, new ClassDelegate(TaskCompleteListener.class, null));
-		}
+			((UserTaskActivityBehavior)activity.getActivityBehavior()).getTaskDefinition().addTaskListener(
+					TaskListener.EVENTNAME_CREATE, new ClassDelegate(TaskCreateListener.class, null));
+		}	
 		
 	}
 

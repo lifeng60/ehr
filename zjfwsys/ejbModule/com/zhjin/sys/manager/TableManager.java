@@ -1342,6 +1342,7 @@ public class TableManager extends BeanBase {
 	@Audit
 	public void largeFieldEdit(ActionEvent event) throws Exception {
 		String dialogId = (String)event.getComponent().getAttributes().get("dialogId");
+		System.out.println(dialogId);
 		long largeId = (Long)event.getComponent().getAttributes().get("largeId");
 		SysLargeText slt = null;
 		if (largeId > 0) {
@@ -1352,7 +1353,7 @@ public class TableManager extends BeanBase {
 		}
 		this.getWindowData().getObjMap().put("largeTextEdit", slt);
 
-		Utility.executeJavaScript(dialogId + ".show();");
+		Utility.executeJavaScript("PF('" + dialogId + "').show();");
 	}
 
 }
