@@ -12,9 +12,9 @@
 		#{windowData.windowTitle}
 	</ui:define>
 	<ui:define name="pagecontent">
-		<h:form id="fileuploadform" prependId="false" enctype="multipart/form-data">
-			<p:fileUpload label="选择文件" cancelLabel="取消" auto="true"
-				dragDropSupport="true" uploadLabel="上传" multiple="false" mode="advanced" showButtons="false" 
+		<h:form enctype="multipart/form-data">
+			<p:fileUpload 
+				
 				fileUploadListener="#{sysUtil.fileUploadProcess}">
 			</p:fileUpload>
 		</h:form>

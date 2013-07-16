@@ -64,7 +64,7 @@ public class TestBean extends BeanBase {
 //    	System.out.println(ui.getFacetCount());
 //    	ui.getChildren().clear();
 //    	ft.apply(facesContext, ui);
-    	System.out.println("open dialog ...");
+//    	System.out.println("open dialog ...");
     	RequestContext.getCurrentInstance().openDialog("/test/test1");
     }
 

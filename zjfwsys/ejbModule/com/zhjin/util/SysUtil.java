@@ -680,7 +680,6 @@ public class SysUtil extends BeanBase {
 		this.getWindowData().setParentWindowData(parentWindowData);
 		this.getWindowData().setInData(data);
 		this.getWindowData().setParentRefreshButton(data.getParentButtonName());
-		
 		Utility.openWindow("/sys/fileupload.jsf?wid=" + ConvManager.getCurrentConvId(), "fileupload", 600, 115);
 		
 	}
@@ -688,7 +687,7 @@ public class SysUtil extends BeanBase {
 	@Audit
 	public void fileUploadProcess(FileUploadEvent event) throws Exception {
 		FileUploadData fData = (FileUploadData)this.getWindowData().getInData();
-
+		System.out.println(fData.getFileUploadProcess());
 		if (Utility.notEmptyString(fData.getFileUploadProcess())) {
 			Utility.executeMethodExpression(fData.getFileUploadProcess(), 
 					new Class[]{FileUploadData.class, UploadedFile.class}, 

@@ -874,7 +874,6 @@ public class WfManager extends BeanBase {
     			break;
     		}
     	}
-    	
     	this.getWindowData().closeWindow(); 
     }
     
