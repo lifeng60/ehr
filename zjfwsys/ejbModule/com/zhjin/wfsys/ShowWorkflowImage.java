@@ -6,6 +6,7 @@ package com.zhjin.wfsys;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +51,6 @@ public class ShowWorkflowImage extends HttpServlet {
 	    		ProcessInstance processInstance = WfManager.processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(instanceId).singleResult();
 	    		if (processInstance != null) {
 	    			Graphics2D g2d = image.createGraphics();
-	    			g2d.setColor(Color.RED);
 	    			g2d.setStroke(new BasicStroke(2.0f));
 	    			
 	    			DiagramLayout processDiagramLayout = WfManager.processEngine.getRepositoryService().getProcessDiagramLayout(processInstance.getProcessDefinitionId());
@@ -70,7 +70,11 @@ public class ShowWorkflowImage extends HttpServlet {
 	    					} else {
 	    						g2d.setColor(Color.red);
 	    					}
-	    					g2d.drawRoundRect(_n.getX().intValue() , _n.getY().intValue(), _n.getWidth().intValue(), _n.getHeight().intValue(), 20, 20);
+	    					if (_n.getId().startsWith("startevent") || _n.getId().startsWith("endevent")) {
+	    						g2d.draw(new Ellipse2D.Double(_n.getX().intValue() , _n.getY().intValue(), _n.getWidth().intValue(), _n.getHeight().intValue()));
+	    					} else {
+	    						g2d.drawRoundRect(_n.getX().intValue() , _n.getY().intValue(), _n.getWidth().intValue(), _n.getHeight().intValue(), 20, 20);
+	    					}
 	    				}
 	    			}
 	    		}

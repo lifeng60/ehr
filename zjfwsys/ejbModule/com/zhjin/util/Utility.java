@@ -51,11 +51,8 @@ public class Utility {
 
 	static {
 		try {
-
 			ctx = new InitialContext();
-
 			widName = "wid";
-
 		} catch (NamingException e) {
 			e.printStackTrace();
 		}
