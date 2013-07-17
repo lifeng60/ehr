@@ -3,6 +3,7 @@
     <wb-module deploy-name="ehr">
         <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
+        <wb-resource deploy-path="/" source-path="/WEBROOT_LOC"/>
         <dependent-module archiveName="zjfwsys.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/zjfwsys/zjfwsys">
             <dependency-type>uses</dependency-type>
         </dependent-module>
