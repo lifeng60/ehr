@@ -14,8 +14,8 @@
 	<ui:define name="pagecontent">
 		<h:form enctype="multipart/form-data">
 			<p:fileUpload 
-				
-				fileUploadListener="#{sysUtil.fileUploadProcess}">
+				mode="advanced"
+				fileUploadListener="#{sysUtil.fileUploadProcess}" auto="true" label="选择文件">
 			</p:fileUpload>
 		</h:form>
 	</ui:define>

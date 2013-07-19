@@ -687,7 +687,6 @@ public class SysUtil extends BeanBase {
 	@Audit
 	public void fileUploadProcess(FileUploadEvent event) throws Exception {
 		FileUploadData fData = (FileUploadData)this.getWindowData().getInData();
-		System.out.println(fData.getFileUploadProcess());
 		if (Utility.notEmptyString(fData.getFileUploadProcess())) {
 			Utility.executeMethodExpression(fData.getFileUploadProcess(), 
 					new Class[]{FileUploadData.class, UploadedFile.class}, 
