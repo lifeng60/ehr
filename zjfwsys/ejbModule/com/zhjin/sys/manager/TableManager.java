@@ -1342,7 +1342,7 @@ public class TableManager extends BeanBase {
 	@Audit
 	public void largeFieldEdit(ActionEvent event) throws Exception {
 		String dialogId = (String)event.getComponent().getAttributes().get("dialogId");
-		System.out.println(dialogId);
+
 		long largeId = (Long)event.getComponent().getAttributes().get("largeId");
 		SysLargeText slt = null;
 		if (largeId > 0) {

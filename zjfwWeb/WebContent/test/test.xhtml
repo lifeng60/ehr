@@ -12,10 +12,12 @@
 			<p:commandButton value="test" onclick="alert(navigator.userAgent);">
 			</p:commandButton>
 			<p:commandButton value="dialogTest" actionListener="#{testBean.testClick}"/>
-			<p:commandButton id="basic" value="Basic" onclick="PF('dlg1').show();" type="button">
+			<p:commandButton id="basic" value="Basic" oncomplete="PF('dlg1').show();">
 			</p:commandButton>
 			<p:dialog header="Basic dialog" widgetVar="dlg1" resizable="false">
-				<h:outputText value="test"/>
+				<zh:div id="abc">
+					<h:outputText value="test"/>
+				</zh:div>
 			</p:dialog>
 		</h:form>
       </ui:define>

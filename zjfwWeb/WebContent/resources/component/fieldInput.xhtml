@@ -138,7 +138,7 @@
 				<f:attribute name="largeId" value="#{cc.attrs.entity[cc.attrs.fieldName]}"></f:attribute>
 			</p:commandButton>
 			<p:dialog header="#{cc.attrs.fieldNameCN}" widgetVar="#{cc.attrs.fieldName}_dlg" modal="true" 
-				resizable="false" rendered="#{cc.attrs.showType == 'LARGETEXT'}"> 
+				resizable="false" rendered="#{cc.attrs.showType == 'LARGETEXT'}" dynamic="true"> 
 				<h:inputTextarea id="largevalue" rendered="#{cc.attrs.showType == 'LARGETEXT'}" 
 					value="#{windowData.objMap['largeTextEdit'].textContent}"
 					style="width:600px;height:400px;"

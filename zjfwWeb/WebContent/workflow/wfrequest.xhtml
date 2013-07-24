@@ -25,12 +25,6 @@
 						</p:commandButton>
 						<p:commandButton id="attachfile" value="附件(#{windowData.inData.attachFileNum})" icon="ui-icon-document">
 						</p:commandButton>
-						<p:commandButton id="wfapply" value="审批" icon="ui-icon-tag"
-							rendered="#{windowData.inData.requestType == 'APPLY'}">
-						</p:commandButton>
-						<p:commandButton id="submitwf" value="提交" icon="ui-icon-check"
-							 rendered="#{windowData.inData.requestType == 'NEW'}">
-						</p:commandButton>
 					</p:toolbarGroup>
 					<p:toolbarGroup align="right" style="padding-top:0px;padding-right:10px;">
 						<p:commandButton value="取消" icon="ui-icon-cancel"
@@ -62,64 +56,78 @@
 					<div style="width:100%;height:5px;clear:both;"></div>
 					<ui:include src="#{windowData.inData.url}" />
 					<div style="float:left;"></div>
-					<p:separator rendered="#{windowData.inData.requestType != 'NEW'}" style="width:99%;float:left;">
-					</p:separator>
-					<zh:div style="padding-left:10px;float:left;"
-						rendered="#{windowData.inData.requestType != 'NEW'}">	
-						<h:panelGrid columns="1">
-							<h:outputText value="流程备注信息:" style="color:#2e6e9e;font-weight:bold;" />
-							<div style="padding-left:20px;float:left;padding-top:8px;">
-								<h:outputText value="#{windowData.inData.wfRemark}" escape="false">
-								</h:outputText>
-							</div>
-							<h:outputText value="已审批结果记录:" style="color:#2e6e9e;font-weight:bold;" />
-						</h:panelGrid>
-					</zh:div>
-				</div>	    	
-		    </div>
-		    <p:overlayPanel for="submitwf" hideEffect="fade" dynamic="true"
-				rendered="#{windowData.inData.requestType == 'NEW'}">
-				<div style="padding:10px;">
-					<h:panelGrid columns="1">
+					<p:panel header="提交申请" style="float:left;width:99%;" rendered="#{windowData.inData.requestType == 'NEW'}">
 						<h:outputText value="流程备注信息:" style="color:#2e6e9e;" />
-						<p:editor value="#{windowData.inData.wfRemark}" width="600" height="240"
+						<p:editor value="#{windowData.inData.wfRemark}" width="1000" height="200"
 							controls="bold italic underline strikethrough font size style color highlight bullets numbering alignleft center alignright justify outdent indent">
 						</p:editor>
-						<p:commandButton value="提交流程申请" icon="ui-icon-check"
+						<p:commandButton value="提交流程申请" icon="ui-icon-check" style="margin-top:2px;"
 							onclick="if (confirm('确认提交流程申请 ?') == false) return false;"
 							actionListener="#{wfManager.submitWf}"
 							rendered="#{windowData.inData.requestType == 'NEW'}">
 						</p:commandButton>
-					</h:panelGrid>
-				</div>
-			</p:overlayPanel>
-			<p:overlayPanel for="wfapply" hideEffect="fade" dynamic="false">
-				<zh:div style="padding:10px;">
-					<h:panelGrid columns="1">
-						<zh:div>
-							<h:outputText value="审批结果: " style="color:#2e6e9e;font-weight:bold;padding-left:0px;" />
-							<p:selectOneButton value="#{windowData.inData.applyResult}" valueChangeListener="#{wfManager.applyResultChange}">
-								<f:selectItem itemLabel="同意" itemValue="AGREE" />
-								<f:selectItem itemLabel="拒绝" itemValue="DENY" />
-								<f:selectItem itemLabel="已阅" itemValue="READ" />
-								<f:selectItem itemLabel="回退" itemValue="ROLLBACK" />
-								<p:ajax envet="change"></p:ajax>
-							</p:selectOneButton>
-							<h:selectOneMenu id="rollbacknodeid" value="#{windowData.inData.rollbackNodeId}"
-								rendered="#{windowData.inData.applyResult == 'ROLLBACK'}">>
-								<f:selectItems value="#{windowData.inData.rollbackNodeList}"></f:selectItems>
-							</h:selectOneMenu>
-						</zh:div>
-						<h:outputText value="审批意见:" style="color:#2e6e9e;font-weight:bold;" />
-						<p:editor value="#{windowData.inData.applyRemark}" width="600" height="200"
+					</p:panel>
+					<p:panel header="流程备注及审批明细" style="float:left;width:99%;" rendered="#{windowData.inData.requestType != 'NEW'}"
+						>						
+						<h:panelGrid columns="1" style="width:100%;">
+							<h:outputText value="流程备注信息:" style="color:#2e6e9e;font-weight:bold;" />
+							<p:panel style="width:1000px;">
+								<h:outputText value="#{windowData.inData.wfRemark}" escape="false">
+								</h:outputText>
+							</p:panel>
+							<h:outputText value="已审批结果记录:" style="color:#2e6e9e;font-weight:bold;" />
+							<p:dataTable value="#{windowData.objMap['actorHistoryList']}" var="row"
+								style="width:1000px;"
+								selectionMode="single"
+								rowKey="#{row.rowKey}">
+								<p:column headerText="流程节点">
+									#{row.nodeName}
+								</p:column>
+								<p:column headerText="审批人" styleClass="columncenter">
+									#{row.actorName}
+								</p:column>
+								<p:column headerText="实际审批人" styleClass="columncenter">
+									#{row.realActorName}
+								</p:column>
+								<p:column headerText="审批结果" styleClass="columncenter">
+									#{row.applyResult}
+								</p:column>
+								<p:column headerText="审批时间" styleClass="columncenter">
+									<h:outputText value="#{row.endTime}">
+										<f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss"/>
+									</h:outputText>
+								</p:column>
+								<p:column headerText="审批意见">
+									<h:outputText value="#{row.applyRemark}" escape="false">
+									</h:outputText>
+								</p:column>
+							</p:dataTable>	
+						</h:panelGrid>
+					</p:panel>
+					<p:panel header="流程审批" style="float:left;width:99%;margin-top:1px;" 
+						rendered="#{windowData.inData.requestType == 'APPLY'}">
+						<h:outputText value="审批结果: " style="color:#2e6e9e;font-weight:bold;padding-left:0px;" />
+						<p:selectOneButton value="#{windowData.inData.applyResult}" valueChangeListener="#{wfManager.applyResultChange}">
+							<f:selectItem itemLabel="同意" itemValue="AGREE" />
+							<f:selectItem itemLabel="拒绝" itemValue="DENY" />
+							<f:selectItem itemLabel="已阅" itemValue="READ" />
+							<f:selectItem itemLabel="回退" itemValue="ROLLBACK" />
+							<p:ajax envet="change"></p:ajax>
+						</p:selectOneButton>
+						<h:selectOneMenu id="rollbacknodeid" value="#{windowData.inData.rollbackNodeId}"
+							rendered="#{windowData.inData.applyResult == 'ROLLBACK'}">>
+							<f:selectItems value="#{windowData.inData.rollbackNodeList}"></f:selectItems>
+						</h:selectOneMenu>
+
+						<p:editor value="#{windowData.inData.applyRemark}" width="1000" height="200"
 							controls="bold italic underline strikethrough font size style color highlight bullets numbering alignleft center alignright justify outdent indent">
 						</p:editor>
-						<p:commandButton value="提交" icon="ui-icon-check"
+						<p:commandButton value="提交审批结果" icon="ui-icon-check" style="margin-top:2px;"
 							actionListener="#{wfManager.applyWorkflow}">
 						</p:commandButton>
-					</h:panelGrid>
-				</zh:div>
-			</p:overlayPanel>		    
+					</p:panel>
+				</div>	    	
+		    </div>
 		</h:form>
 		<p:overlayPanel id="filepanel" for="form:attachfile" hideEffect="fade" style="width:500px;" >
 			<h:form id="abc" enctype="multipart/form-data">

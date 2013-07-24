@@ -614,7 +614,7 @@ public class SysUtil extends BeanBase {
 		slt = dbUtility.update(slt, true);
 		BeanUtils.setProperty(event.getComponent().getAttributes().get("obj"),
 				(String)event.getComponent().getAttributes().get("fieldName"), slt.getId());
-		Utility.executeJavaScript(dialogId + ".hide();");
+		Utility.executeJavaScript("PF('" + dialogId  + "').hide();");
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -696,6 +696,10 @@ public class WfManager extends BeanBase {
     	windowData.setInData(dBase);
     	windowData.getObjMap().put("wfid", wfd.getDefineId()); 
     	windowData.setWindowTitle("流程审批:" + instance.getWfInstanceId() + " - " + actor.getNodeName());
+    	List<WFInstanceActor> actorHistoryList = dbUtility.getDataList(
+    			"select * from wfinstanceactor where endtime is not null and wfinstanceid = :instanceId order by endtime ", 
+    			WFInstanceActor.class, new ArgMap().add("instanceId", instance.getWfInstanceId()));
+    	windowData.getObjMap().put("actorHistoryList", actorHistoryList);
     	windowData.setWindowWidth(1050);
     	windowData.setWindowHeight(700);
    	
@@ -730,6 +734,10 @@ public class WfManager extends BeanBase {
     	windowData.setInData(dBase);
     	windowData.getObjMap().put("wfid", wfd.getDefineId()); 
     	windowData.setWindowTitle("流程查看:" + instance.getWfInstanceId());
+    	List<WFInstanceActor> actorHistoryList = dbUtility.getDataList(
+    			"select * from wfinstanceactor where endtime is not null and wfinstanceid = :instanceId order by endtime ", 
+    			WFInstanceActor.class, new ArgMap().add("instanceId", instance.getWfInstanceId()));
+    	windowData.getObjMap().put("actorHistoryList", actorHistoryList);
     	windowData.setWindowWidth(1050);
     	windowData.setWindowHeight(700);
     }
@@ -867,7 +875,7 @@ public class WfManager extends BeanBase {
     	
     	List<Task> taskList = processEngine.getTaskService().createTaskQuery().processInstanceId(db.getWfInstanceId()).list();
     	for (Task t : taskList) {
-    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {      			
+    		if (t.getTaskDefinitionKey().equals(db.getNodeId())) {  
     			processEngine.getTaskService().complete(t.getId());    			
     			break;
     		}
@@ -877,6 +885,16 @@ public class WfManager extends BeanBase {
     
     public void userTaskCompleteProcess(String processDefinitionId, String processInstanceId, String taskDefinitionKey) throws Exception {
     	WFDataBase db = (WFDataBase)this.getWindowData().getInData();
+    	
+		WFNodeProperty nodeProperty = Utility.getDBUtility().getEntity("select * from wfnodeproperty where wfid = :wfId and nodeid = :nodeId",
+       			WFNodeProperty.class,
+       			new ArgMap().add("wfId", db.getWfId())
+       			.add("nodeId", taskDefinitionKey));
+		
+		if (Utility.notEmptyString(nodeProperty.getApplyEL())) {
+			Utility.executeMethodExpression(nodeProperty.getApplyEL(), new Class[]{}, new Object[]{});
+		}
+		
     	WFInstanceActor actor = dbUtility.getEntity(
     			"select * from wfinstanceactor where wfinstanceid = :instanceId and nodeid = :nodeId and endtime is null", 
     			WFInstanceActor.class, new ArgMap().add("instanceId", db.getWfInstanceId()).add("nodeId", db.getNodeId()));
